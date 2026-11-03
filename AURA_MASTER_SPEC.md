@@ -1,7 +1,7 @@
 # PROYECTO AURA
 ## Especificación maestra de producto, arquitectura y desarrollo
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** Inicio de desarrollo – MVP
 **Nombre del proyecto:** AURA Companion
 **Repositorio:** aura-companion
@@ -25,6 +25,15 @@ La premisa fundamental es:
 **AURA debe ayudar a que una persona pueda desenvolverse mejor en su vida, no hacer que dependa de AURA para desenvolverse.**
 
 Debe estar disponible cuando la persona decida utilizarla, respetando sus tiempos, preferencias y autonomía.
+
+## 1.1 Público objetivo y contexto (v1.1)
+
+- **Usuarios:** niños, niñas y adolescentes de **10 a 18 años** con autismo u otra neurodivergencia.
+- **País:** **Chile** (idioma: español de Chile, sin modismos que dificulten la comprensión).
+- **Supervisión adulta:** como los usuarios son menores de edad, el uso real requiere el conocimiento y la autorización de madre, padre o tutor, y acompañamiento profesional cuando exista.
+- **Rango amplio:** entre 10 y 18 años cambian mucho la autonomía y la privacidad que corresponden. El sistema deberá ajustar el lenguaje, el nivel de supervisión y lo que ven los adultos según la edad y la situación de cada persona. Un adolescente de 17 años no debe ser tratado como un niño de 10.
+- **Tono:** cálido, claro y respetuoso, sin infantilizar. A esta edad la persona suele rechazar lo que percibe como "para niños pequeños".
+- **Estado:** el MVP de la Fase 1 es solo una prueba técnica con datos ficticios. **No debe usarse con menores reales** hasta contar con supervisión adulta, protocolo de seguridad revisado por profesionales y cumplimiento legal (ver secciones 9 y 13).
 
 # 2. FILOSOFÍA Y PRINCIPIOS
 
@@ -182,6 +191,10 @@ Puede contener:
 
 No debe transformarse en un sistema de vigilancia.
 
+Al ser usuarios menores de edad, el nivel de acceso de los adultos se define según la edad (10 a 13 años, 14 a 17 años y 18 años) y debe ser explicado a la persona de forma comprensible. A mayor edad, mayor privacidad. Los adultos no acceden a las conversaciones completas por defecto: reciben lo que la persona haya aceptado compartir, más las alertas de seguridad descritas en la sección 9.
+
+A los 18 años el espacio familiar deja de estar disponible salvo que la persona lo autorice.
+
 ## Espacio profesional
 
 Permite compartir información seleccionada con profesionales autorizados.
@@ -232,7 +245,19 @@ Ante expresiones relacionadas con autolesiones, suicidio o peligro inmediato, de
 - No prometer confidencialidad absoluta ante un peligro inminente.
 - No improvisar diagnósticos ni evaluaciones clínicas.
 
-El protocolo definitivo debe ser revisado por profesionales competentes antes de utilizarse con personas reales.
+Dado que los usuarios son menores de edad, además:
+
+- Ante riesgo grave, el protocolo debe contemplar avisar a un adulto responsable, explicando antes a la persona qué ocurrirá y por qué.
+- Ante expresiones que sugieran maltrato, abuso o violencia hacia la persona, AURA debe escuchar con calma, no minimizar, no interrogar, y orientar hacia un adulto de confianza y los canales de ayuda.
+
+Recursos de referencia para Chile (**verificar vigencia antes de incluirlos en el producto**):
+
+- Emergencias: Carabineros 133, ambulancia SAMU 131.
+- Salud mental y prevención del suicidio: *4141.
+- Salud Responde (Minsal): 600 360 7777.
+- Línea Libre (niños y adolescentes): 1515.
+
+El protocolo definitivo debe ser revisado por profesionales competentes (por ejemplo psicología o psiquiatría infanto-juvenil) antes de utilizarse con personas reales.
 
 # 10. ARQUITECTURA TECNOLÓGICA
 
@@ -389,6 +414,18 @@ Antes de almacenar datos reales:
 - Obtener los consentimientos correspondientes, considerando especialmente que pueden participar menores de edad.
 
 No utilizar información sensible real durante las primeras pruebas.
+
+## Marco legal (Chile)
+
+Los datos de salud, y los de menores de edad, reciben protección especial. Antes de cualquier uso real hay que revisar con un abogado o especialista en protección de datos:
+
+- Ley 19.628 sobre protección de la vida privada y la nueva Ley 21.719 sobre protección de datos personales, cuya entrada en vigencia está prevista para diciembre de 2026 (confirmar fecha y requisitos vigentes).
+- Reglas de consentimiento para menores de edad: consentimiento de madre, padre o tutor, y el tratamiento de datos sensibles de salud.
+- Ley 21.430 sobre garantías de la niñez y adolescencia.
+- Derechos de acceso, rectificación, eliminación y portabilidad de los datos.
+- Si AURA se presenta como apoyo en salud, evaluar si cae en regulación sanitaria.
+
+Este apartado es orientativo y no constituye asesoría legal.
 
 # 14. REGLAS PARA LA IA QUE DESARROLLE EL PROYECTO
 

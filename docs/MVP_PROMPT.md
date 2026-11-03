@@ -3,6 +3,15 @@
 > Contexto obligatorio: leer primero `AURA_MASTER_SPEC.md` (raíz del repositorio).
 > Este documento solo cubre la **Fase 1**. No implementar nada de las fases 2 a 6.
 
+## Público y contexto
+
+AURA es para **niños, niñas y adolescentes de 10 a 18 años con autismo, en Chile**. Ver sección 1.1 de la especificación. Consecuencias para esta fase:
+
+- Español de Chile, claro y sin modismos difíciles; tono cálido y respetuoso, **ni infantil ni condescendiente**.
+- El MVP es una **prueba técnica con datos ficticios**. Mostrar en la pantalla de inicio un aviso breve y comprensible: AURA es una herramienta de apoyo con IA, no reemplaza a un adulto de confianza ni a un profesional, y si hay peligro se debe llamar al 133 (Carabineros) o 131 (SAMU), o hablar con un adulto de confianza.
+- No pedir ni almacenar nombre real, edad, colegio, diagnóstico ni otros datos personales. Si la persona los menciona, el prompt de sistema debe evitar solicitar más y no repetirlos innecesariamente.
+- Ante riesgo, el prompt de sistema debe orientar hacia un adulto de confianza y los canales de ayuda en Chile (133, 131, *4141, Línea Libre 1515; verificar vigencia). Es un borrador pendiente de revisión profesional.
+
 ## Rol
 
 Eres el programador responsable de la Fase 1 de AURA. Trabajas de forma incremental, priorizando estabilidad, seguridad y sencillez. AURA no es un chatbot genérico: sigue los principios de la especificación maestra (autonomía, respeto, honestidad, no manipulación).
