@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>AURA</title>
+  <meta name="description" content="AURA: un acompañante para conversar, organizar y ordenar ideas, a tu ritmo.">
+  <link rel="icon" href="/aura.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#message">Ir al cuadro de mensaje</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <img src="/aura.svg" alt="" width="40" height="40">
+        <h1>AURA</h1>
+      </div>
+      <div class="tools">
+        <button type="button" id="calm" aria-pressed="false">Menos estímulos</button>
+        <button type="button" id="reset">Nueva conversación</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="notice" aria-label="Aviso importante">
+        <p class="sos">Si estás en peligro, llama al <strong>133</strong> (Carabineros) o al <strong>131</strong> (ambulancia), o habla ahora con un adulto de confianza.</p>
+        <details>
+          <summary>Sobre esta versión de prueba</summary>
+          <p>AURA es una herramienta de apoyo con inteligencia artificial. No es una persona y no reemplaza a un adulto de confianza ni a un profesional. No escribas datos personales. No recuerda conversaciones anteriores.</p>
+        </details>
+      </section>
+
+      <div id="log" class="log" role="log" aria-live="polite" aria-label="Conversación">
+        <div class="msg aura">
+          <p>Hola. Estoy aquí si necesitas conversar, organizar algo o simplemente ordenar tus ideas. Podemos ir a tu ritmo.</p>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+    </main>
+
+    <form id="form" class="composer" autocomplete="off">
+      <label for="message" class="sr">Escribe tu mensaje</label>
+      <textarea id="message" rows="2" maxlength="1500" placeholder="Escribe aquí. No hay apuro." required></textarea>
+      <button type="submit" id="send">Enviar</button>
+    </form>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

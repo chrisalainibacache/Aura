@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aura",
+  "main": "src/index.js",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "ai": { "binding": "AI" },
+  "vars": {
+    // Cambiar de modelo = cambiar solo este valor (ver docs/ARCHITECTURE.md).
+    "MODEL_ID": "@cf/meta/llama-3.1-8b-instruct",
+    "HISTORY_LIMIT": "10",
+    "MAX_MESSAGE_CHARS": "1500",
+    "MAX_TOKENS": "350"
+  },
+  "observability": { "enabled": false }
+}
