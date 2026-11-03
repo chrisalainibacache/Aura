@@ -57,8 +57,8 @@ El binding `AI` y las variables están declarados en `wrangler.jsonc`; no se nec
 | `MAX_MESSAGE_CHARS` | Largo máximo de cada mensaje | `1500` |
 | `MAX_TOKENS` | Largo máximo de la respuesta | `350` |
 
-Antes de desplegar, confirma en el catálogo de Workers AI que el modelo existe y que su
-calidad en español es suficiente.
+El modelo inicial es provisional: ver [`docs/EVALUATION.md`](docs/EVALUATION.md) para compararlo con otros
+con `scripts/eval-models.mjs` antes de uso real.
 
 ## Cómo comprobar que funciona
 
