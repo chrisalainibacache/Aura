@@ -72,6 +72,19 @@ function extractReply(result) {
   return typeof text === "string" && text.trim() ? text.trim() : "";
 }
 
+// Uso de tokens: lo informado por el modelo o, si no lo informa, una estimación (~4 caracteres por token).
+function tokenUsage(result, messages, reply) {
+  const input = Number(result?.usage?.prompt_tokens);
+  const output = Number(result?.usage?.completion_tokens);
+  if (Number.isFinite(input) && Number.isFinite(output) && input >= 0 && output >= 0) {
+    return { input, output, total: input + output, estimated: false };
+  }
+  const chars = messages.reduce((n, m) => n + m.content.length, 0);
+  const i = Math.ceil(chars / 4);
+  const o = Math.ceil(reply.length / 4);
+  return { input: i, output: o, total: i + o, estimated: true };
+}
+
 async function handleChat(request, env) {
   if (request.method !== "POST") {
     return fail(405, "method_not_allowed", "Este servicio solo acepta mensajes enviados desde la aplicación.");
@@ -126,8 +139,9 @@ async function handleChat(request, env) {
   for (const model of models) {
     for (const input of inputs) {
       try {
-        const reply = extractReply(await env.AI.run(model, input));
-        if (reply) return json({ reply, model });
+        const result = await env.AI.run(model, input);
+        const reply = extractReply(result);
+        if (reply) return json({ reply, model, usage: tokenUsage(result, messages, reply) });
       } catch (err) {
         // Solo se registra el modelo, el tipo y el código de error, nunca el contenido de la conversación.
         const ref = aiErrorRef(err);

@@ -24,7 +24,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
 .sos strong { color: var(--text); }
 
 button {
-  font: inherit; font-size: .8rem; min-height: 44px; padding: 6px 12px; cursor: pointer;
+  font: inherit; font-size: .72rem; min-height: 36px; padding: 4px 10px; cursor: pointer;
   border-radius: 12px; border: 1.5px solid var(--border); background: transparent; color: var(--text); white-space: nowrap;
 }
 button[aria-pressed="true"] { border-color: var(--accent); background: rgba(127, 214, 230, .12); }
@@ -40,6 +40,7 @@ main { flex: 1; display: flex; flex-direction: column; align-items: center; padd
   position: relative; width: min(62vw, 280px); aspect-ratio: 1; margin: 18px auto 14px; perspective: 900px;
 }
 .orb[data-state="thinking"] { --speed: 4.5s; --pulse: 1.8s; --glow: .8; }
+.orb[data-state="listening"] { --speed: 11s; --pulse: 2.4s; --glow: .8; }
 .orb[data-state="speaking"] { --speed: 9s; --pulse: 1.2s; --glow: .95; }
 .halo {
   position: absolute; inset: -14%; border-radius: 50%;
@@ -98,4 +99,14 @@ textarea:focus { border-color: var(--accent); }
 html[data-calm="true"] * { animation: none !important; transition: none !important; }
 html[data-calm="true"] .orb { --glow: .35; opacity: .85; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media (max-width: 420px) { .tools button { padding: 6px 9px; font-size: .75rem; } }
+.tokens { margin: 0 0 4px; font: .7rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); text-align: center; letter-spacing: .02em; }
+.lab-body { padding-bottom: 8px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; }
+.row label { font-size: .75rem; }
+select {
+  font: inherit; font-size: .75rem; min-height: 36px; max-width: 100%; padding: 4px 8px;
+  border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
+}
+.hint { margin: .4em 0; font-size: .75rem; line-height: 1.45; }
+.hint strong { color: var(--text); }
+@media (max-width: 420px) { .tools { gap: 4px; } .tools button { padding: 4px 8px; font-size: .68rem; } .top h1 { letter-spacing: .2em; font-size: 1.1rem; } }

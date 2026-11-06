@@ -19,7 +19,11 @@ test("responde y envía el prompt de sistema + modelo configurable", async () =>
   const env = mkEnv(async (model, input) => { call = { model, input }; return { response: " Hola " }; });
   const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { reply: "Hola", model: "@cf/test/model" });
+  const body = await res.json();
+  assert.equal(body.reply, "Hola");
+  assert.equal(body.model, "@cf/test/model");
+  assert.equal(body.usage.estimated, true);
+  assert.equal(body.usage.total, body.usage.input + body.usage.output);
   assert.equal(call.model, "@cf/test/model");
   assert.equal(call.input.messages[0].role, "system");
   assert.equal(call.input.messages.at(-1).content, "hola");
@@ -99,7 +103,8 @@ test("si el modelo principal falla usa uno de respaldo", async () => {
   console.error = orig;
   assert.equal(res.status, 200);
   const body = await res.json();
-  assert.deepEqual(body, { reply: "respuesta de respaldo", model: "@cf/test/backup" });
+  assert.equal(body.reply, "respuesta de respaldo");
+  assert.equal(body.model, "@cf/test/backup");
   assert.deepEqual(calls.map((c) => c[0]), ["@cf/test/model", "@cf/test/model", "@cf/test/backup"]);
 });
 
@@ -110,4 +115,10 @@ test("si todos fallan devuelve 502 con los códigos de referencia", async () => 
   console.error = orig;
   assert.equal(res.status, 502);
   assert.equal((await res.json()).error.ref, "5028/5007");
+});
+
+test("usa los tokens que informa el modelo cuando existen", async () => {
+  const env = mkEnv(async () => ({ response: "ok", usage: { prompt_tokens: 120, completion_tokens: 30, total_tokens: 150 } }));
+  const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
+  assert.deepEqual((await res.json()).usage, { input: 120, output: 30, total: 150, estimated: false });
 });

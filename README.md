@@ -31,6 +31,18 @@ npm run dev       # http://localhost:8787
 `npm run dev` usa el binding de Workers AI, que se ejecuta en Cloudflare: la primera vez
 `wrangler` pedirá iniciar sesión (`npx wrangler login`) y el uso cuenta contra tu cupo.
 
+## Voz, micrófono y medidor de tokens (laboratorio)
+
+- **Voz:** botón "Voz" (apagado por defecto). Usa las voces del dispositivo; en "Laboratorio: voz y comandos"
+  se elige la voz en español y la velocidad. En Android, más voces se instalan en
+  *Ajustes → Salida de texto a voz*.
+- **Mic y comandos de voz:** «nueva conversación», «menos estímulos», «más estímulos», «activar voz»,
+  «desactivar voz», «repetir», «detener», «ayuda». Cualquier otra frase se envía como mensaje.
+  Solo escucha mientras se pulsa Mic. En Chrome, el reconocimiento de voz puede procesar el audio en
+  servidores de Google: dejarlo documentado en la política de privacidad antes de uso real.
+- **Medidor de tokens:** línea bajo el átomo con tokens del último mensaje y de la conversación
+  (`~` = estimación cuando el modelo no informa el uso). No guarda nada.
+
 ## Despliegue
 
 **Opción A: desde la terminal**

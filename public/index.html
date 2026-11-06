@@ -20,6 +20,7 @@
       <h1>AURA</h1>
       <div class="tools">
         <button type="button" id="voice" aria-pressed="false" hidden>Voz: no</button>
+        <button type="button" id="mic" aria-pressed="false" aria-label="Dictar por voz y usar comandos de voz" hidden>Mic</button>
         <button type="button" id="calm" aria-pressed="false">Menos estímulos</button>
         <button type="button" id="reset" aria-label="Nueva conversación">Nueva</button>
       </div>
@@ -37,9 +38,29 @@
       </div>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>
+      <p id="tokens" class="tokens" aria-label="Medidor de tokens">Tokens · sin mensajes aún</p>
       <p id="you" class="you" hidden></p>
       <div id="reply" class="reply" aria-live="polite"></div>
 
+      <details class="more lab">
+        <summary>Laboratorio: voz y comandos</summary>
+        <div class="lab-body">
+          <div id="voiceControls" class="row">
+            <label for="voiceSelect">Voz</label>
+            <select id="voiceSelect"></select>
+            <label for="rate">Velocidad</label>
+            <select id="rate">
+              <option value="0.8">Lenta</option>
+              <option value="0.95" selected>Normal</option>
+              <option value="1.1">Rápida</option>
+            </select>
+            <button type="button" id="voiceTest">Probar voz</button>
+          </div>
+          <p class="hint"><strong>Comandos de voz</strong> (botón Mic): «nueva conversación», «menos estímulos», «más estímulos», «activar voz», «desactivar voz», «repetir», «detener», «ayuda». Si dices otra cosa, se envía como mensaje.</p>
+          <p class="hint"><strong>Privacidad del micrófono:</strong> el reconocimiento de voz lo hace el navegador. En Chrome, el audio puede procesarse en servidores de Google. Es opcional y solo escucha cuando pulsas Mic.</p>
+          <p class="hint"><strong>Tokens:</strong> son las unidades de texto que usa el modelo. «Entrada» incluye las instrucciones de AURA y el historial; «salida» es la respuesta. El signo ~ indica que es una estimación.</p>
+        </div>
+      </details>
       <details class="more">
         <summary>Ver conversación</summary>
         <div id="log" class="log" role="log" aria-label="Conversación"></div>
