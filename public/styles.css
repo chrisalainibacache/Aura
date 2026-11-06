@@ -115,3 +115,24 @@ select {
 .talkhint { margin: 0 0 2px; font-size: .78rem; color: var(--muted); text-align: center; }
 .orb[role="button"] { cursor: pointer; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
 .orb[role="button"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 6px; }
+
+/* Modo presentación: solo el átomo. Los textos siguen disponibles para lectores de pantalla; los errores se ven. */
+.exit { display: none; }
+html[data-presentation="true"] .top,
+html[data-presentation="true"] .sos,
+html[data-presentation="true"] .tokens,
+html[data-presentation="true"] .talkhint,
+html[data-presentation="true"] .you,
+html[data-presentation="true"] .more,
+html[data-presentation="true"] .composer { display: none; }
+html[data-presentation="true"] .status,
+html[data-presentation="true"] .reply:not(.error) {
+  position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+html[data-presentation="true"] main { justify-content: center; padding-top: 0; }
+html[data-presentation="true"] .orb { width: min(80vw, 460px); margin: 0 auto; }
+html[data-presentation="true"] .exit {
+  display: block; position: fixed; top: 10px; right: 10px; width: 44px; min-height: 44px; padding: 0;
+  font-size: 1.4rem; line-height: 1; opacity: .3; z-index: 5;
+}
+html[data-presentation="true"] .exit:hover, html[data-presentation="true"] .exit:focus-visible { opacity: 1; }
