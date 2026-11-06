@@ -146,3 +146,11 @@ test("el prompt de crisis prioriza contener y no solo derivar", async () => {
   assert.match(SYSTEM_PROMPT, /BORRADOR/);
   assert.match(SYSTEM_PROMPT, /133/);
 });
+
+test("el prompt cubre señales indirectas, no fingir sentimientos y capacidades", async () => {
+  const { SYSTEM_PROMPT } = await import("../src/systemPrompt.js");
+  assert.match(SYSTEM_PROMPT, /SEÑALES INDIRECTAS/);
+  assert.match(SYSTEM_PROMPT, /no debería estar acá/);
+  assert.match(SYSTEM_PROMPT, /no finjas sentimientos/);
+  assert.match(SYSTEM_PROMPT, /Nunca respondas solo "no puedo"/);
+});
