@@ -20,6 +20,7 @@
   let stateTimer = null;
   let lastReply = "";
   let lastFailedText = "";
+  let presentation = false, wasFullscreen = false;
   let convo = false, silences = 0, gotResult = false, wakeLock = null, listenTimer = null;
   let lastUsedModel = "";
   let models = [];
@@ -127,7 +128,7 @@
   function startSpeaking(text, force) {
     setState("speaking");
     const back = () => { if (orb.dataset.state === "speaking") setState("idle"); if (convo) listenSoon(); };
-    if (synth && (voiceOn || force || convo)) {
+    if (synth && (voiceOn || force || convo || presentation)) {
       speak(text, back);
     } else {
       // Sin voz: la luz acompaña mientras se lee (entre 1,5 y 7 segundos).
@@ -303,6 +304,8 @@
   // --- Comandos de voz y dictado (opcional; solo escucha mientras se pulsa Mic)
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
   const COMMANDS = [
+    { label: "modo presentación", re: /\b(modo presentacion|pantalla limpia)\b/, run: () => setPresentation(true) },
+    { label: "salir de la presentación", re: /\b(salir|terminar) (de )?(la )?presentacion\b/, run: () => setPresentation(false) },
     { label: "terminar conversación", re: /\b(terminar|finalizar|cerrar) (la )?(conversacion|charla)\b|\bhasta luego\b|\bchao\b|\badios\b/, run: () => endConvo() },
     { label: "nueva conversación", re: /\b(nueva conversacion|empezar de nuevo|borrar todo)\b/, run: resetConversation },
     { label: "menos estímulos", re: /\b(menos estimulos|modo calma|modo tranquilo)\b/, run: () => setCalm(true) },
@@ -379,6 +382,31 @@
     };
     try { rec.start(); } catch { /* ya estaba escuchando */ }
   }
+  // --- Modo presentación: solo el átomo, sin textos ni controles; AURA siempre responde con voz
+  function setPresentation(on) {
+    presentation = on;
+    document.documentElement.dataset.presentation = on ? "true" : "false";
+    const root = document.documentElement;
+    try {
+      if (on && root.requestFullscreen) {
+        const r = root.requestFullscreen();
+        if (r && r.catch) r.catch(() => {});
+      } else if (!on && document.fullscreenElement) {
+        const r = document.exitFullscreen();
+        if (r && r.catch) r.catch(() => {});
+      }
+    } catch { /* pantalla completa no disponible */ }
+    if (!on) wasFullscreen = false;
+  }
+  $("presentBtn").addEventListener("click", () => setPresentation(true));
+  $("exitPresentation").addEventListener("click", () => setPresentation(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && presentation) setPresentation(false); });
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement) wasFullscreen = true;
+    else if (presentation && wasFullscreen) setPresentation(false); // salir de pantalla completa = salir de la presentación
+  });
+  try { if (new URLSearchParams(location.search).get("presentacion") === "1") setPresentation(true); } catch { /* sin parámetros */ }
+
   // --- Conversación por voz (sin teclado): tocar el átomo; escucha, responde hablando y vuelve a escuchar
   function listenSoon() {
     clearTimeout(listenTimer);
