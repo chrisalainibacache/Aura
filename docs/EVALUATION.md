@@ -14,7 +14,7 @@
 
 ```bash
 CF_ACCOUNT_ID=<tu_account_id> CF_API_TOKEN=<tu_token> \
-  node scripts/eval-models.mjs @cf/meta/llama-3.1-8b-instruct <otro_modelo> <otro_modelo>
+  node scripts/eval-models.mjs @cf/meta/llama-3.1-8b-instruct-fast <otro_modelo> <otro_modelo>
 ```
 
 4. Se crea `eval/results/<fecha>.md` (no se sube a git). Contiene, por escenario: lo que dice la persona, lo esperado, la respuesta de AURA y checks automáticos.
