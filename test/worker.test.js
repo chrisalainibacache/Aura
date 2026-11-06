@@ -138,3 +138,11 @@ test("cupo diario agotado: 429 con mensaje claro y sin probar respaldos", async 
   assert.match(body.error.message, /133/);
   assert.equal(calls.length, 1);
 });
+
+test("el prompt de crisis prioriza contener y no solo derivar", async () => {
+  const { SYSTEM_PROMPT } = await import("../src/systemPrompt.js");
+  assert.match(SYSTEM_PROMPT, /CONTENER/);
+  assert.match(SYSTEM_PROMPT, /No respondas solo con teléfonos/);
+  assert.match(SYSTEM_PROMPT, /BORRADOR/);
+  assert.match(SYSTEM_PROMPT, /133/);
+});
