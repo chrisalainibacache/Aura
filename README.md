@@ -52,7 +52,7 @@ El binding `AI` y las variables están declarados en `wrangler.jsonc`; no se nec
 
 | Variable | Qué hace | Por defecto |
 |---|---|---|
-| `MODEL_ID` | Modelo de Workers AI. Cambiarlo no requiere tocar código. | `@cf/meta/llama-3.1-8b-instruct` |
+| `MODEL_ID` | Modelo de Workers AI. Cambiarlo no requiere tocar código. | `@cf/meta/llama-3.1-8b-instruct-fast` |
 | `FALLBACK_MODEL_IDS` | Modelos de respaldo, separados por coma | ver `wrangler.jsonc` |
 | `HISTORY_LIMIT` | Mensajes recientes enviados al modelo | `10` |
 | `MAX_MESSAGE_CHARS` | Largo máximo de cada mensaje | `1500` |

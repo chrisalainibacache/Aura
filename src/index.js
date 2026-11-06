@@ -5,7 +5,7 @@
 import { SYSTEM_PROMPT } from "./systemPrompt.js";
 
 const DEFAULTS = {
-  MODEL_ID: "@cf/meta/llama-3.1-8b-instruct",
+  MODEL_ID: "@cf/meta/llama-3.1-8b-instruct-fast",
   HISTORY_LIMIT: 10,
   MAX_MESSAGE_CHARS: 1500,
   MAX_TOKENS: 350,
