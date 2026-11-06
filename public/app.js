@@ -304,5 +304,26 @@
     mic.addEventListener("click", () => (listening ? stopListening() : startListening()));
   }
 
+  // --- Copiar la conversación (solo en este dispositivo; para revisarla con quien ayuda a mejorar AURA)
+  $("copyLog").addEventListener("click", async () => {
+    if (!history.length) { status.textContent = "Aún no hay conversación para copiar."; return; }
+    const lines = history.map((m) => `${m.role === "user" ? "Persona" : "AURA"}: ${m.content}`);
+    const mi = $("modelInfo");
+    const text = `${lines.join("\n\n")}\n\n---\n${mi.hidden ? "" : mi.textContent + "\n"}${tokensEl.textContent}`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.className = "sr";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch { /* sin portapapeles */ }
+      ta.remove();
+    }
+    status.textContent = "Conversación copiada. Puedes pegarla donde quieras revisarla.";
+  });
+
   welcome();
 })();
