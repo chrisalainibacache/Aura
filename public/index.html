@@ -30,6 +30,7 @@
 
     <main>
       <div class="orb" id="orb" data-state="idle" aria-hidden="true">
+        <canvas id="atomCanvas" class="atom-canvas" aria-hidden="true"></canvas>
         <div class="halo"></div>
         <div class="orbit o1"><div class="spin"><span class="electron"></span></div></div>
         <div class="orbit o2"><div class="spin"><span class="electron"></span></div></div>
@@ -97,6 +98,7 @@
     </form>
   </div>
   <button type="button" id="exitPresentation" class="exit" aria-label="Salir del modo presentación">×</button>
+  <script src="/atom.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
