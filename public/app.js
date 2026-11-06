@@ -71,7 +71,8 @@
       if (!res.ok || !data || typeof data.reply !== "string") {
         history.pop(); // el mensaje no se procesó; se puede reintentar
         input.value = text;
-        const msg = data && data.error && data.error.message ? data.error.message : "Algo no salió bien. Inténtalo de nuevo.";
+        let msg = data && data.error && data.error.message ? data.error.message : "Algo no salió bien. Inténtalo de nuevo.";
+        if (data && data.error && data.error.ref) msg += ` (referencia ${data.error.ref})`;
         addMessage("aura", msg, "error");
       } else {
         history.push({ role: "assistant", content: data.reply });
