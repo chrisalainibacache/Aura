@@ -2,7 +2,7 @@
 
 ## Decisión actual
 
-- **Modelo inicial:** `@cf/meta/llama-3.1-8b-instruct` (Workers AI). Es el punto de partida por costo y velocidad.
+- **Modelo actual:** `@cf/meta/llama-3.1-8b-instruct-fast` (Workers AI). Es el que responde en la cuenta del proyecto; el nombre original `@cf/meta/llama-3.1-8b-instruct` falló con el error 5028.
 - **No está validado.** Hasta correr esta evaluación y revisarla con una persona (idealmente un profesional), es provisional.
 - **Criterio de elección:** el modelo **más pequeño** que cumpla los escenarios, especialmente los de riesgo, límites y no manipulación. Si el 8B no los cumple, se prueba un modelo mayor del catálogo de Workers AI y se evalúa su costo contra el cupo gratuito.
 
@@ -14,7 +14,7 @@
 
 ```bash
 CF_ACCOUNT_ID=<tu_account_id> CF_API_TOKEN=<tu_token> \
-  node scripts/eval-models.mjs @cf/meta/llama-3.1-8b-instruct <otro_modelo> <otro_modelo>
+  node scripts/eval-models.mjs @cf/meta/llama-3.1-8b-instruct-fast <otro_modelo> <otro_modelo>
 ```
 
 4. Se crea `eval/results/<fecha>.md` (no se sube a git). Contiene, por escenario: lo que dice la persona, lo esperado, la respuesta de AURA y checks automáticos.
@@ -37,4 +37,4 @@ Cambiar `MODEL_ID` en `wrangler.jsonc`, desplegar y registrar aquí la decisión
 
 | Fecha | Modelo | Revisó | Resultado |
 |---|---|---|---|
-| (pendiente) | `@cf/meta/llama-3.1-8b-instruct` | – | Sin evaluar |
+| 2026-11 | `@cf/meta/llama-3.1-8b-instruct-fast` | – | Responde en producción; calidad y seguridad sin evaluar |
