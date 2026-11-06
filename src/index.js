@@ -33,8 +33,14 @@ function json(body, status = 200, extra = {}) {
 }
 
 // Mensajes de error pensados para ser leídos por la persona usuaria.
-function fail(status, code, message) {
-  return json({ error: { code, message } }, status);
+function fail(status, code, message, ref) {
+  return json({ error: { code, message, ...(ref ? { ref } : {}) } }, status);
+}
+
+// Código numérico de Workers AI (p. ej. 5007) extraído del error, sin texto de la conversación.
+function aiErrorRef(err) {
+  const m = String(err?.message ?? "").match(/\b\d{4}\b/);
+  return m ? m[0] : undefined;
 }
 
 // Valida y normaliza el historial enviado por el navegador.
@@ -112,8 +118,9 @@ async function handleChat(request, env) {
     return json({ reply: reply.trim() });
   } catch (err) {
     // Solo se registra el tipo de error, nunca el contenido de la conversación.
-    console.error("ai_error", err?.name || "Error");
-    return fail(502, "ai_error", "Tuve un problema para responder. Puedes intentarlo de nuevo en un momento.");
+    const ref = aiErrorRef(err);
+    console.error("ai_error", err?.name || "Error", ref || "");
+    return fail(502, "ai_error", "Tuve un problema para responder. Puedes intentarlo de nuevo en un momento.", ref);
   }
 }
 

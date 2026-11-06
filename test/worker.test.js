@@ -75,3 +75,14 @@ test("parseMessages ignora mensajes vacíos", () => {
   const r = parseMessages({ messages: [{ role: "user", content: "  " }, { role: "user", content: "hola" }] }, { historyLimit: 10, maxChars: 100 });
   assert.equal(r.messages.length, 1);
 });
+
+test("error del modelo incluye solo el código numérico de referencia", async () => {
+  const orig = console.error; console.error = () => {};
+  const env = mkEnv(async () => { throw new Error("5007: No such model hola-privado"); });
+  const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola-privado" }] }), env);
+  console.error = orig;
+  const body = await res.json();
+  assert.equal(res.status, 502);
+  assert.equal(body.error.ref, "5007");
+  assert.ok(!JSON.stringify(body).includes("hola-privado"));
+});
