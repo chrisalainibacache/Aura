@@ -241,3 +241,13 @@ test("/api/speak recorta textos muy largos", async () => {
   await worker.fetch(speak({ text: "palabra ".repeat(1000) }), { ...env, TTS_MODEL_ID: "@cf/myshell-ai/melotts" });
   assert.ok(sent.length <= 1500);
 });
+
+test("el prompt no obliga a recitar aclaraciones y pide voz humana sin inventar pasado", async () => {
+  const { SYSTEM_PROMPT } = await import("../src/systemPrompt.js");
+  assert.match(SYSTEM_PROMPT, /NO lo repites/);
+  assert.match(SYSTEM_PROMPT, /Nunca digas por iniciativa propia/);
+  assert.match(SYSTEM_PROMPT, /VOZ HUMANA/);
+  assert.match(SYSTEM_PROMPT, /No inventes un pasado compartido/);
+  assert.match(SYSTEM_PROMPT, /no te voy a decir solo lo que quieres escuchar/);
+  assert.doesNotMatch(SYSTEM_PROMPT, /Eres una herramienta de IA\. No eres una persona/);
+});
