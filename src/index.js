@@ -66,6 +66,12 @@ export function parseMessages(payload, { historyLimit, maxChars }) {
   return { messages };
 }
 
+// Algunos modelos responden { response }, otros en formato tipo OpenAI ({ choices }).
+function extractReply(result) {
+  const text = typeof result === "string" ? result : result?.response ?? result?.choices?.[0]?.message?.content;
+  return typeof text === "string" && text.trim() ? text.trim() : "";
+}
+
 async function handleChat(request, env) {
   if (request.method !== "POST") {
     return fail(405, "method_not_allowed", "Este servicio solo acepta mensajes enviados desde la aplicación.");
@@ -105,23 +111,32 @@ async function handleChat(request, env) {
     return fail(503, "ai_unavailable", "AURA no está disponible en este momento. Intenta de nuevo más tarde.");
   }
 
-  try {
-    const result = await env.AI.run(env.MODEL_ID || DEFAULTS.MODEL_ID, {
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...parsed.messages],
-      max_tokens: num(env.MAX_TOKENS, DEFAULTS.MAX_TOKENS),
-      temperature: 0.5,
-    });
-    const reply = typeof result === "string" ? result : result?.response;
-    if (typeof reply !== "string" || !reply.trim()) {
-      return fail(502, "empty_reply", "No pude armar una respuesta. ¿Puedes intentarlo otra vez?");
+  // Prueba el modelo principal y luego los de respaldo. Con cada modelo intenta primero con
+  // todos los parámetros y después solo con los mensajes, por si alguno rechaza algún parámetro.
+  const models = [...new Set([
+    env.MODEL_ID || DEFAULTS.MODEL_ID,
+    ...String(env.FALLBACK_MODEL_IDS || "").split(",").map((m) => m.trim()).filter(Boolean),
+  ])];
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...parsed.messages];
+  const inputs = [
+    { messages, max_tokens: num(env.MAX_TOKENS, DEFAULTS.MAX_TOKENS), temperature: 0.5 },
+    { messages },
+  ];
+  const refs = [];
+  for (const model of models) {
+    for (const input of inputs) {
+      try {
+        const reply = extractReply(await env.AI.run(model, input));
+        if (reply) return json({ reply, model });
+      } catch (err) {
+        // Solo se registra el modelo, el tipo y el código de error, nunca el contenido de la conversación.
+        const ref = aiErrorRef(err);
+        if (ref && !refs.includes(ref)) refs.push(ref);
+        console.error("ai_error", model, err?.name || "Error", ref || "");
+      }
     }
-    return json({ reply: reply.trim() });
-  } catch (err) {
-    // Solo se registra el tipo de error, nunca el contenido de la conversación.
-    const ref = aiErrorRef(err);
-    console.error("ai_error", err?.name || "Error", ref || "");
-    return fail(502, "ai_error", "Tuve un problema para responder. Puedes intentarlo de nuevo en un momento.", ref);
   }
+  return fail(502, "ai_error", "Tuve un problema para responder. Puedes intentarlo de nuevo en un momento.", refs.join("/") || undefined);
 }
 
 export default {

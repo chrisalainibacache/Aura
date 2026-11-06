@@ -130,6 +130,7 @@
         showReply(msg, true);
         setState("idle");
       } else {
+        if (typeof data.model === "string") { const mi = $("modelInfo"); mi.textContent = `Modelo en uso: ${data.model}`; mi.hidden = false; }
         history.push({ role: "assistant", content: data.reply });
         addToLog("aura", data.reply);
         showReply(data.reply);

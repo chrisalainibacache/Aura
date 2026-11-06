@@ -19,7 +19,7 @@ test("responde y envía el prompt de sistema + modelo configurable", async () =>
   const env = mkEnv(async (model, input) => { call = { model, input }; return { response: " Hola " }; });
   const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { reply: "Hola" });
+  assert.deepEqual(await res.json(), { reply: "Hola", model: "@cf/test/model" });
   assert.equal(call.model, "@cf/test/model");
   assert.equal(call.input.messages[0].role, "system");
   assert.equal(call.input.messages.at(-1).content, "hola");
@@ -85,4 +85,29 @@ test("error del modelo incluye solo el código numérico de referencia", async (
   assert.equal(res.status, 502);
   assert.equal(body.error.ref, "5007");
   assert.ok(!JSON.stringify(body).includes("hola-privado"));
+});
+
+test("si el modelo principal falla usa uno de respaldo", async () => {
+  const calls = [];
+  const orig = console.error; console.error = () => {};
+  const env = { ...mkEnv(async (model, input) => {
+    calls.push([model, Object.keys(input).join()]);
+    if (model === "@cf/test/model") throw new Error("5028: boom");
+    return { choices: [{ message: { content: "respuesta de respaldo" } }] };
+  }), FALLBACK_MODEL_IDS: "@cf/test/backup" };
+  const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
+  console.error = orig;
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.deepEqual(body, { reply: "respuesta de respaldo", model: "@cf/test/backup" });
+  assert.deepEqual(calls.map((c) => c[0]), ["@cf/test/model", "@cf/test/model", "@cf/test/backup"]);
+});
+
+test("si todos fallan devuelve 502 con los códigos de referencia", async () => {
+  const orig = console.error; console.error = () => {};
+  const env = { ...mkEnv(async (m) => { throw new Error(m.endsWith("backup") ? "5007: x" : "5028: y"); }), FALLBACK_MODEL_IDS: "@cf/test/backup" };
+  const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
+  console.error = orig;
+  assert.equal(res.status, 502);
+  assert.equal((await res.json()).error.ref, "5028/5007");
 });
