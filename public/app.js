@@ -13,6 +13,9 @@
   const calm = $("calm"), voice = $("voice"), mic = $("mic"), reset = $("reset");
   const modelSel = $("modelSelect"), retryBtn = $("retryModel");
   const talkHint = $("talkHint");
+  // Átomo de alta resolución (canvas); si no está disponible queda el átomo CSS.
+  const atom = window.AuraAtom ? window.AuraAtom.create($("atomCanvas")) : null;
+  if (atom) orb.classList.add("canvas-on");
   const tokensEl = $("tokens"), voiceSel = $("voiceSelect"), rateSel = $("rate"), voiceTest = $("voiceTest");
 
   let history = [];
@@ -21,6 +24,7 @@
   let lastReply = "";
   let lastFailedText = "";
   let presentation = false, wasFullscreen = false;
+  let actx = null, levelNodes = null; // Web Audio (nivel de voz para el átomo)
   let convo = false, silences = 0, gotResult = false, wakeLock = null, listenTimer = null;
   let lastUsedModel = "";
   let models = [];
@@ -36,6 +40,7 @@
     document.documentElement.dataset.calm = on ? "true" : "false";
     calm.setAttribute("aria-pressed", String(on));
     store.set("aura-calm", on ? "1" : "0");
+    if (atom) atom.setStill(on);
   }
   setCalm(store.get("aura-calm") === "1");
   calm.addEventListener("click", () => setCalm(calm.getAttribute("aria-pressed") !== "true"));
@@ -125,7 +130,44 @@
     synth.speak(u);
   }
 
+  // El átomo late con el volumen real de la voz de AURA (Web Audio). Si no se puede medir, usa un latido simulado.
+  async function prepareLevel() {
+    if (!atom) return false;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      actx = actx || new AC();
+      if (actx.state === "suspended") await Promise.race([actx.resume(), new Promise((r) => setTimeout(r, 300))]);
+      return actx.state === "running";
+    } catch { return false; }
+  }
+  function attachLevel(a) {
+    try {
+      const src = actx.createMediaElementSource(a);
+      const an = actx.createAnalyser();
+      an.fftSize = 512;
+      src.connect(an);
+      an.connect(actx.destination);
+      const buf = new Uint8Array(an.fftSize);
+      levelNodes = { src, an };
+      atom.setLevelSource(() => {
+        an.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        return Math.min(1, Math.sqrt(sum / buf.length) * 3.4);
+      });
+    } catch { if (atom) atom.setLevelSource(null); }
+  }
+  function detachLevel() {
+    if (atom) atom.setLevelSource(null);
+    if (levelNodes) {
+      try { levelNodes.src.disconnect(); levelNodes.an.disconnect(); } catch { /* ya desconectado */ }
+      levelNodes = null;
+    }
+  }
+
   function cancelAudio() {
+    detachLevel();
     if (audioAbort) { audioAbort.abort(); audioAbort = null; }
     if (audio) {
       audio.onended = null; audio.onerror = null;
@@ -152,6 +194,8 @@
     const a = new Audio(url);
     a.playbackRate = (Number(rateSel.value) || 0.95) / 0.95;
     audio = a;
+    if (await prepareLevel()) attachLevel(a);
+    if (token !== speakToken) { detachLevel(); return; }
     await a.play(); // si el navegador lo bloquea, lanza y se usa la voz del dispositivo
     showVoiceInfo(`Voz en uso: AURA (${shortName(res.headers.get("X-Aura-Tts-Model") || "servidor")})`);
     const end = () => { if (audio === a) cancelAudio(); onEnd(); };
@@ -186,6 +230,7 @@
   function setState(state) {
     clearTimeout(stateTimer);
     orb.dataset.state = state;
+    if (atom) atom.setState(state);
   }
 
   function startSpeaking(text, force) {

@@ -36,6 +36,12 @@ npm run dev       # http://localhost:8787
 - **Voz:** botón "Voz" (apagado por defecto). Usa las voces del dispositivo; en "Laboratorio: voz y comandos"
   se elige la voz en español y la velocidad. En Android, más voces se instalan en
   *Ajustes → Salida de texto a voz*.
+- **Átomo vivo en alta resolución:** se dibuja en un canvas (`public/atom.js`) a la resolución nativa de la pantalla
+  (hasta ~2.300 px de lienzo, suficiente para 4K) y baja la calidad solo si el dispositivo va justo. Respira en
+  reposo, emite ondas hacia adentro al escuchar, gira rápido al pensar y, al hablar, **late con el volumen real de la
+  voz de AURA** (Web Audio; con la voz del teléfono usa un latido simulado), con ondas de luz y electrones que se
+  aceleran. Los cambios son suaves (sin parpadeos). "Menos estímulos" y el ajuste de movimiento reducido del
+  sistema lo dejan quieto. Si el canvas no está disponible, vuelve el átomo CSS.
 - **Voz de AURA (servidor):** por defecto la voz sale de Workers AI (`TTS_MODEL_ID`, por defecto
   `@cf/myshell-ai/melotts`, con `TTS_FALLBACK_MODEL_IDS` como respaldo) mediante `POST /api/speak`, y suena igual en
   cualquier dispositivo. Si el servidor no responde (modelo no disponible en la cuenta, cupo agotado o

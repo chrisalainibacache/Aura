@@ -136,3 +136,10 @@ html[data-presentation="true"] .exit {
   font-size: 1.4rem; line-height: 1; opacity: .3; z-index: 5;
 }
 html[data-presentation="true"] .exit:hover, html[data-presentation="true"] .exit:focus-visible { opacity: 1; }
+
+/* Átomo dibujado en canvas (alta resolución). Si el canvas no está disponible, se usa el átomo CSS de respaldo. */
+.atom-canvas { position: absolute; left: -18%; top: -18%; width: 136%; height: 136%; display: none; pointer-events: none; }
+.orb.canvas-on .atom-canvas { display: block; }
+.orb.canvas-on .halo, .orb.canvas-on .orbit, .orb.canvas-on .nucleus { display: none; }
+html[data-presentation="true"] .app { max-width: none; }
+html[data-presentation="true"] .orb { width: min(86vw, 78vh, 1500px); }
