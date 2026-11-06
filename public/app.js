@@ -5,13 +5,14 @@
   const WELCOME = "Hola. Estoy aquí si necesitas conversar, organizar algo o simplemente ordenar tus ideas. Podemos ir a tu ritmo.";
   const HISTORY_LIMIT = 10;
   const FRIENDLY_NETWORK = "No pude conectarme. Revisa tu internet e inténtalo de nuevo cuando quieras.";
-  const HELP = "Comandos de voz: «nueva conversación», «menos estímulos», «más estímulos», «activar voz», «desactivar voz», «repetir», «detener» y «ayuda». Cualquier otra cosa que digas se envía como mensaje.";
+  const HELP = "Comandos de voz: «nueva conversación», «menos estímulos», «más estímulos», «activar voz», «desactivar voz», «repetir», «detener», «terminar conversación» y «ayuda». Para conversar sin teclado, toca el átomo. Cualquier otra cosa que digas se envía como mensaje.";
 
   const $ = (id) => document.getElementById(id);
   const orb = $("orb"), log = $("log"), reply = $("reply"), you = $("you"), status = $("status");
   const form = $("form"), input = $("message"), send = $("send");
   const calm = $("calm"), voice = $("voice"), mic = $("mic"), reset = $("reset");
   const modelSel = $("modelSelect"), retryBtn = $("retryModel");
+  const talkHint = $("talkHint");
   const tokensEl = $("tokens"), voiceSel = $("voiceSelect"), rateSel = $("rate"), voiceTest = $("voiceTest");
 
   let history = [];
@@ -19,6 +20,7 @@
   let stateTimer = null;
   let lastReply = "";
   let lastFailedText = "";
+  let convo = false, silences = 0, gotResult = false, wakeLock = null, listenTimer = null;
   let lastUsedModel = "";
   let models = [];
   const tok = { input: 0, output: 0, last: null, estimated: false };
@@ -124,8 +126,8 @@
 
   function startSpeaking(text, force) {
     setState("speaking");
-    const back = () => { if (orb.dataset.state === "speaking") setState("idle"); };
-    if (synth && (voiceOn || force)) {
+    const back = () => { if (orb.dataset.state === "speaking") setState("idle"); if (convo) listenSoon(); };
+    if (synth && (voiceOn || force || convo)) {
       speak(text, back);
     } else {
       // Sin voz: la luz acompaña mientras se lee (entre 1,5 y 7 segundos).
@@ -207,7 +209,13 @@
     reply.appendChild(b);
   }
 
-  async function submit(text) {
+  // Tras un error, si se conversa por voz, se lee el mensaje para que no haga falta mirar la pantalla.
+  function afterError(msg) {
+    if (convo) startSpeaking(msg, true);
+    else setState("idle");
+  }
+
+  async function submit(text, viaVoice) {
     history.push({ role: "user", content: text });
     const logged = addToLog("user", text);
     you.textContent = text;
@@ -232,7 +240,7 @@
         if (data && data.error && data.error.ref) msg += ` (referencia ${data.error.ref})`;
         showReply(msg, true);
         offerRetry(text);
-        setState("idle");
+        afterError(msg);
       } else {
         lastFailedText = "";
         lastUsedModel = typeof data.model === "string" ? data.model : lastUsedModel;
@@ -251,10 +259,10 @@
       input.value = text;
       showReply(FRIENDLY_NETWORK, true);
       offerRetry(text);
-      setState("idle");
+      afterError(FRIENDLY_NETWORK);
     } finally {
       setBusy(false);
-      if (!listening) input.focus();
+      if (!listening && !convo && !viaVoice) input.focus(); // no abrir el teclado al hablar
     }
   }
 
@@ -295,6 +303,7 @@
   // --- Comandos de voz y dictado (opcional; solo escucha mientras se pulsa Mic)
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
   const COMMANDS = [
+    { label: "terminar conversación", re: /\b(terminar|finalizar|cerrar) (la )?(conversacion|charla)\b|\bhasta luego\b|\bchao\b|\badios\b/, run: () => endConvo() },
     { label: "nueva conversación", re: /\b(nueva conversacion|empezar de nuevo|borrar todo)\b/, run: resetConversation },
     { label: "menos estímulos", re: /\b(menos estimulos|modo calma|modo tranquilo)\b/, run: () => setCalm(true) },
     { label: "más estímulos", re: /\b(mas estimulos|quitar modo calma)\b/, run: () => setCalm(false) },
@@ -302,7 +311,7 @@
     { label: "activar voz", re: /\b(activar|encender|prender) (la )?voz\b/, run: () => setVoice(true) },
     { label: "repetir", re: /\b(repetir|repite)\b/, run: () => { if (lastReply) startSpeaking(lastReply, true); } },
     { label: "detener", re: /\b(detener|parar|basta)\b/, run: stopSpeaking },
-    { label: "ayuda", re: /\b(ayuda|comandos)\b/, run: () => { showReply(HELP); setState("idle"); } },
+    { label: "ayuda", re: /\b(ayuda|comandos)\b/, run: () => { showReply(HELP); if (convo) startSpeaking(HELP, true); else setState("idle"); } },
   ];
   function matchCommand(text) {
     const n = norm(text);
@@ -315,15 +324,21 @@
 
   function handleSpoken(text) {
     const cmd = matchCommand(text);
-    if (cmd) { status.textContent = `Comando: ${cmd.label}`; cmd.run(); return; }
+    if (cmd) {
+      status.textContent = `Comando: ${cmd.label}`;
+      cmd.run();
+      if (convo && orb.dataset.state !== "speaking") listenSoon();
+      return;
+    }
     if (busy) { status.textContent = "Espera un momento, AURA todavía está respondiendo."; return; }
     input.value = "";
-    submit(text);
+    submit(text, true);
   }
 
   function stopListening() { if (rec) { try { rec.stop(); } catch { /* ya detenido */ } } }
   function startListening() {
-    if (!SR || busy) return;
+    if (!SR || busy || listening) return;
+    gotResult = false;
     stopSpeaking();
     rec = new SR();
     rec.lang = "es-CL";
@@ -340,12 +355,14 @@
     rec.onresult = (e) => {
       const last = e.results[e.results.length - 1];
       const text = last && last[0] ? String(last[0].transcript).trim() : "";
-      if (text) handleSpoken(text);
+      if (text) { gotResult = true; silences = 0; handleSpoken(text); }
     };
     rec.onerror = (e) => {
-      status.textContent = e.error === "not-allowed" || e.error === "service-not-allowed"
+      const denied = e.error === "not-allowed" || e.error === "service-not-allowed";
+      status.textContent = denied
         ? "No tengo permiso para usar el micrófono."
         : e.error === "no-speech" ? "No te escuché. Puedes intentarlo de nuevo." : "No pude escucharte.";
+      if (denied && convo) endConvo("No tengo permiso para usar el micrófono.");
     };
     rec.onend = () => {
       listening = false;
@@ -353,12 +370,70 @@
       mic.textContent = "Mic";
       if (orb.dataset.state === "listening") setState("idle");
       if (status.textContent === "Te escucho…") status.textContent = "";
+      // En conversación por voz: si no hubo voz, reintenta; tras 3 silencios seguidos se pausa sola.
+      if (convo && !gotResult && !busy && orb.dataset.state !== "speaking") {
+        silences += 1;
+        if (silences >= 3) endConvo("No te escucho. Pausé la conversación por voz. Toca el átomo para seguir.");
+        else listenSoon();
+      }
     };
     try { rec.start(); } catch { /* ya estaba escuchando */ }
   }
+  // --- Conversación por voz (sin teclado): tocar el átomo; escucha, responde hablando y vuelve a escuchar
+  function listenSoon() {
+    clearTimeout(listenTimer);
+    listenTimer = setTimeout(() => {
+      if (convo && !busy && !listening && orb.dataset.state !== "speaking") startListening();
+    }, 500);
+  }
+  function setTalkUI(on) {
+    orb.setAttribute("aria-pressed", String(on));
+    talkHint.textContent = on ? "Conversación por voz activa. Toca el átomo para terminar." : "Toca el átomo para conversar por voz.";
+  }
+  async function requestWake() {
+    try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch { /* no disponible */ }
+  }
+  function releaseWake() {
+    try { if (wakeLock) wakeLock.release(); } catch { /* ya liberado */ }
+    wakeLock = null;
+  }
+  function startConvo() {
+    if (!SR || convo) return;
+    convo = true;
+    silences = 0;
+    setTalkUI(true);
+    requestWake();
+    status.textContent = "Conversación por voz activa.";
+    startListening();
+  }
+  function endConvo(message) {
+    convo = false;
+    clearTimeout(listenTimer);
+    stopListening();
+    stopSpeaking();
+    releaseWake();
+    setTalkUI(false);
+    setState("idle");
+    status.textContent = message || "Conversación por voz terminada.";
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && convo) endConvo("Pausé la conversación por voz porque saliste de la pantalla.");
+  });
+
   if (SR) {
     mic.hidden = false;
-    mic.addEventListener("click", () => (listening ? stopListening() : startListening()));
+    mic.addEventListener("click", () => { if (!convo) (listening ? stopListening() : startListening()); });
+    orb.removeAttribute("aria-hidden");
+    orb.setAttribute("role", "button");
+    orb.setAttribute("tabindex", "0");
+    orb.setAttribute("aria-label", "Conversar por voz. Tocar para empezar o terminar.");
+    talkHint.hidden = false;
+    setTalkUI(false);
+    const toggle = () => (convo ? endConvo() : startConvo());
+    orb.addEventListener("click", toggle);
+    orb.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
   }
 
   // --- Copiar la conversación (solo en este dispositivo; para revisarla con quien ayuda a mejorar AURA)

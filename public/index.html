@@ -37,6 +37,7 @@
         <div class="nucleus"></div>
       </div>
 
+      <p id="talkHint" class="talkhint" hidden></p>
       <p id="status" class="status" role="status" aria-live="polite"></p>
       <p id="tokens" class="tokens" aria-label="Medidor de tokens">Tokens · sin mensajes aún</p>
       <p id="you" class="you" hidden></p>
@@ -62,8 +63,8 @@
             <button type="button" id="retryModel">Reintentar con otro modelo</button>
           </div>
           <div class="row"><button type="button" id="copyLog">Copiar conversación</button></div>
-          <p class="hint"><strong>Comandos de voz</strong> (botón Mic): «nueva conversación», «menos estímulos», «más estímulos», «activar voz», «desactivar voz», «repetir», «detener», «ayuda». Si dices otra cosa, se envía como mensaje.</p>
-          <p class="hint"><strong>Privacidad del micrófono:</strong> el reconocimiento de voz lo hace el navegador. En Chrome, el audio puede procesarse en servidores de Google. Es opcional y solo escucha cuando pulsas Mic.</p>
+          <p class="hint"><strong>Comandos de voz</strong> (botón Mic): «nueva conversación», «menos estímulos», «más estímulos», «activar voz», «desactivar voz», «repetir», «detener», «terminar conversación», «ayuda». Si dices otra cosa, se envía como mensaje.</p>
+          <p class="hint"><strong>Privacidad del micrófono:</strong> el reconocimiento de voz lo hace el navegador. En Chrome, el audio puede procesarse en servidores de Google. Es opcional. El botón Mic escucha una sola vez. En la conversación por voz (tocar el átomo) el micrófono se reactiva solo después de que AURA termina de hablar, y se detiene al tocar el átomo de nuevo, al decir «terminar conversación», tras 3 silencios seguidos o si sales de la pantalla.</p>
           <p class="hint"><strong>Tokens:</strong> son las unidades de texto que usa el modelo. «Entrada» incluye las instrucciones de AURA y el historial; «salida» es la respuesta. El signo ~ indica que es una estimación.</p>
         </div>
       </details>

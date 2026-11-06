@@ -112,3 +112,6 @@ select {
 @media (max-width: 420px) { .tools { gap: 4px; } .tools button { padding: 4px 8px; font-size: .68rem; } .top h1 { letter-spacing: .2em; font-size: 1.1rem; } }
 
 .reply .retry { margin-top: 8px; }
+.talkhint { margin: 0 0 2px; font-size: .78rem; color: var(--muted); text-align: center; }
+.orb[role="button"] { cursor: pointer; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
+.orb[role="button"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 6px; }

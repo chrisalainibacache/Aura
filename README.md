@@ -40,6 +40,12 @@ npm run dev       # http://localhost:8787
   «desactivar voz», «repetir», «detener», «ayuda». Cualquier otra frase se envía como mensaje.
   Solo escucha mientras se pulsa Mic. En Chrome, el reconocimiento de voz puede procesar el audio en
   servidores de Google: dejarlo documentado en la política de privacidad antes de uso real.
+- **Conversación por voz (sin teclado):** tocar el átomo. AURA escucha, responde hablando y vuelve a
+  escuchar sola. Se termina tocando el átomo, diciendo «terminar conversación», tras 3 silencios seguidos
+  o al salir de la pantalla. No abre el teclado y mantiene la pantalla encendida si el navegador lo permite.
+  Requiere un navegador con reconocimiento de voz (Chrome en Android); en Chrome el audio puede procesarse
+  en servidores de Google, así que debe documentarse y consentirse antes de uso real. Durante la
+  conversación el micrófono está activo: el átomo se ilumina y un texto lo indica.
 - **Cambiar de modelo:** en el Laboratorio hay un selector de modelo y el botón "Reintentar con otro modelo"
   (también aparece junto a un mensaje de error). Recorre solo la lista permitida del servidor (`MODEL_ID` y
   `FALLBACK_MODEL_IDS`); el navegador no puede pedir otros modelos. Al elegir uno se usa solo ese, sin respaldos,
