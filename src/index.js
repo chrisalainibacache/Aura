@@ -91,6 +91,20 @@ function isQuotaError(err) {
   return /\b4006\b|daily free allocation|used up your daily|neurons/i.test(msg);
 }
 
+// Modelos que el navegador puede elegir: solo el principal y los de respaldo configurados.
+function allowedModels(env) {
+  return [...new Set([
+    env.MODEL_ID || DEFAULTS.MODEL_ID,
+    ...String(env.FALLBACK_MODEL_IDS || "").split(",").map((m) => m.trim()).filter(Boolean),
+  ])];
+}
+
+function handleModels(request, env) {
+  if (request.method !== "GET") return fail(405, "method_not_allowed", "Este servicio solo acepta consultas desde la aplicación.");
+  const models = allowedModels(env);
+  return json({ models, default: models[0] });
+}
+
 async function handleChat(request, env) {
   if (request.method !== "POST") {
     return fail(405, "method_not_allowed", "Este servicio solo acepta mensajes enviados desde la aplicación.");
@@ -132,10 +146,15 @@ async function handleChat(request, env) {
 
   // Prueba el modelo principal y luego los de respaldo. Con cada modelo intenta primero con
   // todos los parámetros y después solo con los mensajes, por si alguno rechaza algún parámetro.
-  const models = [...new Set([
-    env.MODEL_ID || DEFAULTS.MODEL_ID,
-    ...String(env.FALLBACK_MODEL_IDS || "").split(",").map((m) => m.trim()).filter(Boolean),
-  ])];
+  // Si la persona eligió un modelo (botón de laboratorio), se usa solo ese y debe estar en la lista permitida.
+  const allowed = allowedModels(env);
+  const requested = payload.model;
+  if (requested !== undefined && requested !== null && requested !== "") {
+    if (typeof requested !== "string" || !allowed.includes(requested)) {
+      return fail(400, "invalid_model", "Ese modelo no está disponible.");
+    }
+  }
+  const models = requested ? [requested] : allowed;
   const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...parsed.messages];
   const inputs = [
     { messages, max_tokens: num(env.MAX_TOKENS, DEFAULTS.MAX_TOKENS), temperature: 0.5 },
@@ -168,6 +187,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") return handleChat(request, env);
+    if (url.pathname === "/api/models") return handleModels(request, env);
     if (url.pathname.startsWith("/api/")) return fail(404, "not_found", "No encontré lo que buscas.");
     // Resto de rutas: archivos estáticos (cabeceras definidas en public/_headers).
     return env.ASSETS.fetch(request);
