@@ -81,6 +81,14 @@ con `scripts/eval-models.mjs` antes de uso real.
 4. Pulsa "Menos estímulos": se quitan animaciones y colores de fondo.
 5. Revisa que el repositorio no contenga claves (`git grep -i -E "token|secret|api[_-]?key"`).
 
+## Límite diario de Workers AI
+
+El plan gratuito incluye un cupo diario de "neuronas" (no de tokens), que se reinicia a las 00:00 UTC
+(verificar en el panel de Cloudflare). Todos los modelos de Workers AI comparten ese cupo, así que cambiar de
+modelo no ayuda cuando se agota. En ese caso AURA muestra un mensaje claro (con el 133 y el 131) y vuelve a
+funcionar tras el reinicio. Para no depender del cupo gratuito: plan Workers Paid (pago por uso).
+El uso real se ve en el panel de Cloudflare → Workers AI.
+
 ## Limitaciones conocidas
 
 - **Sin detección propia de riesgo:** la respuesta ante autolesión o peligro depende del prompt
