@@ -7,58 +7,111 @@
   const FRIENDLY_NETWORK = "No pude conectarme. Revisa tu internet e inténtalo de nuevo cuando quieras.";
 
   const $ = (id) => document.getElementById(id);
-  const log = $("log"), form = $("form"), input = $("message"), send = $("send");
-  const status = $("status"), calm = $("calm"), reset = $("reset");
+  const orb = $("orb"), log = $("log"), reply = $("reply"), you = $("you"), status = $("status");
+  const form = $("form"), input = $("message"), send = $("send");
+  const calm = $("calm"), voice = $("voice"), reset = $("reset");
 
   let history = [];
   let busy = false;
+  let stateTimer = null;
 
-  // --- Preferencia "menos estímulos" (opcional; si no hay almacenamiento, sigue funcionando)
+  // --- Preferencias opcionales (si no hay almacenamiento, todo sigue funcionando)
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } },
+  };
+
   function setCalm(on) {
     document.documentElement.dataset.calm = on ? "true" : "false";
     calm.setAttribute("aria-pressed", String(on));
-    try { localStorage.setItem("aura-calm", on ? "1" : "0"); } catch { /* sin almacenamiento */ }
+    store.set("aura-calm", on ? "1" : "0");
   }
-  let saved = null;
-  try { saved = localStorage.getItem("aura-calm"); } catch { /* sin almacenamiento */ }
-  setCalm(saved === "1");
+  setCalm(store.get("aura-calm") === "1");
   calm.addEventListener("click", () => setCalm(calm.getAttribute("aria-pressed") !== "true"));
 
+  // --- Voz (opcional, apagada por defecto; usa la voz del propio dispositivo)
+  const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+  let voiceOn = false;
+  function setVoice(on) {
+    voiceOn = on && canSpeak;
+    voice.setAttribute("aria-pressed", String(voiceOn));
+    voice.textContent = voiceOn ? "Voz: sí" : "Voz: no";
+    store.set("aura-voice", voiceOn ? "1" : "0");
+    if (!voiceOn && canSpeak) window.speechSynthesis.cancel();
+  }
+  if (canSpeak) {
+    voice.hidden = false;
+    setVoice(store.get("aura-voice") === "1");
+    voice.addEventListener("click", () => setVoice(!voiceOn));
+  }
+
+  function pickVoice() {
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find((v) => /^es[-_]CL/i.test(v.lang)) || voices.find((v) => /^es/i.test(v.lang)) || null;
+  }
+
+  // --- Estado del átomo: idle | thinking | speaking
+  function setState(state) {
+    clearTimeout(stateTimer);
+    orb.dataset.state = state;
+  }
+
+  function startSpeaking(text) {
+    setState("speaking");
+    const back = () => setState("idle");
+    if (voiceOn) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "es-CL";
+      const v = pickVoice();
+      if (v) u.voice = v;
+      u.rate = 0.95;
+      u.onend = back;
+      u.onerror = back;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } else {
+      // Sin voz: la luz acompaña mientras se lee (entre 1,5 y 7 segundos).
+      stateTimer = setTimeout(back, Math.min(7000, Math.max(1500, text.length * 45)));
+    }
+  }
+
   // --- Render seguro: siempre textContent, nunca innerHTML
-  function addMessage(role, text, extraClass) {
-    const box = document.createElement("div");
-    box.className = `msg ${role}${extraClass ? " " + extraClass : ""}`;
+  function paragraphs(container, text) {
     text.split(/\n{2,}/).forEach((part) => {
       const p = document.createElement("p");
       p.textContent = part;
-      box.appendChild(p);
+      container.appendChild(p);
     });
-    log.appendChild(box);
-    box.scrollIntoView({ block: "end", behavior: calm.getAttribute("aria-pressed") === "true" ? "auto" : "smooth" });
-    return box;
   }
 
-  function addLoading() {
+  function showReply(text, isError) {
+    reply.replaceChildren();
+    reply.className = isError ? "reply error" : "reply";
+    paragraphs(reply, text);
+  }
+
+  function addToLog(role, text) {
     const box = document.createElement("div");
-    box.className = "msg aura";
-    box.innerHTML = '<span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+    box.className = `msg ${role}`;
+    paragraphs(box, text);
     log.appendChild(box);
-    box.scrollIntoView({ block: "end" });
     return box;
   }
 
   function setBusy(on) {
     busy = on;
     send.disabled = on;
-    status.hidden = !on;
     status.textContent = on ? "AURA está escribiendo…" : "";
   }
 
   async function submit(text) {
     history.push({ role: "user", content: text });
-    addMessage("user", text);
+    const logged = addToLog("user", text);
+    you.textContent = text;
+    you.hidden = false;
+    showReply("");
     setBusy(true);
-    const loading = addLoading();
+    setState("thinking");
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -67,22 +120,28 @@
       });
       let data = null;
       try { data = await res.json(); } catch { /* respuesta no JSON */ }
-      loading.remove();
       if (!res.ok || !data || typeof data.reply !== "string") {
-        history.pop(); // el mensaje no se procesó; se puede reintentar
+        history.pop(); // no se procesó; se puede reintentar
+        logged.remove();
+        you.hidden = true;
         input.value = text;
         let msg = data && data.error && data.error.message ? data.error.message : "Algo no salió bien. Inténtalo de nuevo.";
         if (data && data.error && data.error.ref) msg += ` (referencia ${data.error.ref})`;
-        addMessage("aura", msg, "error");
+        showReply(msg, true);
+        setState("idle");
       } else {
         history.push({ role: "assistant", content: data.reply });
-        addMessage("aura", data.reply);
+        addToLog("aura", data.reply);
+        showReply(data.reply);
+        startSpeaking(data.reply);
       }
     } catch {
-      loading.remove();
       history.pop();
+      logged.remove();
+      you.hidden = true;
       input.value = text;
-      addMessage("aura", FRIENDLY_NETWORK, "error");
+      showReply(FRIENDLY_NETWORK, true);
+      setState("idle");
     } finally {
       setBusy(false);
       input.focus();
@@ -94,6 +153,7 @@
     const text = input.value.trim();
     if (!text || busy) return;
     input.value = "";
+    if (canSpeak) window.speechSynthesis.cancel();
     submit(text);
   });
 
@@ -105,11 +165,18 @@
     }
   });
 
-  reset.addEventListener("click", () => {
+  function welcome() {
     history = [];
     log.replaceChildren();
-    addMessage("aura", WELCOME);
+    you.hidden = true;
+    showReply(WELCOME);
+    setState("idle");
+  }
+  reset.addEventListener("click", () => {
+    if (canSpeak) window.speechSynthesis.cancel();
+    welcome();
     input.value = "";
     input.focus();
   });
+  welcome();
 })();
