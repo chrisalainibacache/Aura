@@ -110,3 +110,5 @@ select {
 .hint { margin: .4em 0; font-size: .75rem; line-height: 1.45; }
 .hint strong { color: var(--text); }
 @media (max-width: 420px) { .tools { gap: 4px; } .tools button { padding: 4px 8px; font-size: .68rem; } .top h1 { letter-spacing: .2em; font-size: 1.1rem; } }
+
+.reply .retry { margin-top: 8px; }

@@ -154,3 +154,32 @@ test("el prompt cubre señales indirectas, no fingir sentimientos y capacidades"
   assert.match(SYSTEM_PROMPT, /no finjas sentimientos/);
   assert.match(SYSTEM_PROMPT, /Nunca respondas solo "no puedo"/);
 });
+
+test("GET /api/models devuelve la lista permitida", async () => {
+  const env = { ...mkEnv(async () => ({})), FALLBACK_MODEL_IDS: "@cf/test/a, @cf/test/b" };
+  const res = await worker.fetch(new Request("https://x/api/models"), env);
+  assert.deepEqual(await res.json(), { models: ["@cf/test/model", "@cf/test/a", "@cf/test/b"], default: "@cf/test/model" });
+  assert.equal((await worker.fetch(new Request("https://x/api/models", { method: "POST" }), env)).status, 405);
+});
+
+test("modelo elegido: se usa solo ese; uno fuera de la lista se rechaza", async () => {
+  const calls = [];
+  const env = { ...mkEnv(async (model) => { calls.push(model); return { response: "ok " + model }; }), FALLBACK_MODEL_IDS: "@cf/test/a" };
+  const ok = await worker.fetch(post({ model: "@cf/test/a", messages: [{ role: "user", content: "hola" }] }), env);
+  assert.equal((await ok.json()).model, "@cf/test/a");
+  assert.deepEqual(calls, ["@cf/test/a"]);
+  const bad = await worker.fetch(post({ model: "@cf/otro/caro", messages: [{ role: "user", content: "hola" }] }), env);
+  assert.equal(bad.status, 400);
+  assert.equal((await bad.json()).error.code, "invalid_model");
+  assert.equal(calls.length, 1);
+});
+
+test("modelo elegido que falla no prueba los demás", async () => {
+  const calls = [];
+  const orig = console.error; console.error = () => {};
+  const env = { ...mkEnv(async (model) => { calls.push(model); throw new Error("5028: x"); }), FALLBACK_MODEL_IDS: "@cf/test/a" };
+  const res = await worker.fetch(post({ model: "@cf/test/a", messages: [{ role: "user", content: "hola" }] }), env);
+  console.error = orig;
+  assert.equal(res.status, 502);
+  assert.ok(calls.every((m) => m === "@cf/test/a"));
+});

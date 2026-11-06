@@ -11,12 +11,16 @@
   const orb = $("orb"), log = $("log"), reply = $("reply"), you = $("you"), status = $("status");
   const form = $("form"), input = $("message"), send = $("send");
   const calm = $("calm"), voice = $("voice"), mic = $("mic"), reset = $("reset");
+  const modelSel = $("modelSelect"), retryBtn = $("retryModel");
   const tokensEl = $("tokens"), voiceSel = $("voiceSelect"), rateSel = $("rate"), voiceTest = $("voiceTest");
 
   let history = [];
   let busy = false;
   let stateTimer = null;
   let lastReply = "";
+  let lastFailedText = "";
+  let lastUsedModel = "";
+  let models = [];
   const tok = { input: 0, output: 0, last: null, estimated: false };
 
   // --- Preferencias opcionales (si no hay almacenamiento, todo sigue funcionando)
@@ -129,6 +133,42 @@
     }
   }
 
+  // --- Elección de modelo (laboratorio): solo entre los que publica el servidor
+  const shortName = (m) => m.replace(/^@cf\//, "");
+  async function loadModels() {
+    try {
+      const res = await fetch("/api/models");
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.models)) return;
+      models = data.models;
+      modelSel.replaceChildren();
+      const auto = document.createElement("option");
+      auto.value = ""; auto.textContent = "Automático (principal con respaldo)";
+      modelSel.appendChild(auto);
+      models.forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m; o.textContent = shortName(m);
+        modelSel.appendChild(o);
+      });
+    } catch { /* sin lista: el modo automático sigue funcionando */ }
+  }
+  function retryWithNextModel() {
+    if (busy) return;
+    if (models.length < 2) { status.textContent = "No hay otros modelos disponibles."; return; }
+    const current = modelSel.value || lastUsedModel || models[0];
+    const next = models[(Math.max(0, models.indexOf(current)) + 1) % models.length];
+    modelSel.value = next;
+    if (lastFailedText) {
+      const text = lastFailedText;
+      input.value = "";
+      submit(text);
+    } else {
+      status.textContent = `Los próximos mensajes usarán ${shortName(next)}.`;
+    }
+  }
+  retryBtn.addEventListener("click", retryWithNextModel);
+  loadModels();
+
   // --- Render seguro: siempre textContent, nunca innerHTML
   function paragraphs(container, text) {
     text.split(/\n{2,}/).forEach((part) => {
@@ -155,6 +195,18 @@
     status.textContent = on ? "AURA está escribiendo…" : "";
   }
 
+  // Tras un error, deja el botón para reintentar con otro modelo junto al mensaje.
+  function offerRetry(text) {
+    lastFailedText = text;
+    if (models.length < 2) return;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "retry";
+    b.textContent = "Reintentar con otro modelo";
+    b.addEventListener("click", retryWithNextModel);
+    reply.appendChild(b);
+  }
+
   async function submit(text) {
     history.push({ role: "user", content: text });
     const logged = addToLog("user", text);
@@ -167,7 +219,7 @@
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.slice(-HISTORY_LIMIT) }),
+        body: JSON.stringify({ messages: history.slice(-HISTORY_LIMIT), ...(modelSel.value ? { model: modelSel.value } : {}) }),
       });
       let data = null;
       try { data = await res.json(); } catch { /* respuesta no JSON */ }
@@ -179,8 +231,11 @@
         let msg = data && data.error && data.error.message ? data.error.message : "Algo no salió bien. Inténtalo de nuevo.";
         if (data && data.error && data.error.ref) msg += ` (referencia ${data.error.ref})`;
         showReply(msg, true);
+        offerRetry(text);
         setState("idle");
       } else {
+        lastFailedText = "";
+        lastUsedModel = typeof data.model === "string" ? data.model : lastUsedModel;
         if (typeof data.model === "string") { const mi = $("modelInfo"); mi.textContent = `Modelo en uso: ${data.model}`; mi.hidden = false; }
         addUsage(data.usage);
         history.push({ role: "assistant", content: data.reply });
@@ -195,6 +250,7 @@
       you.hidden = true;
       input.value = text;
       showReply(FRIENDLY_NETWORK, true);
+      offerRetry(text);
       setState("idle");
     } finally {
       setBusy(false);
@@ -222,6 +278,7 @@
   function welcome() {
     history = [];
     lastReply = "";
+    lastFailedText = "";
     log.replaceChildren();
     you.hidden = true;
     resetTokens();

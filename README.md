@@ -40,6 +40,10 @@ npm run dev       # http://localhost:8787
   «desactivar voz», «repetir», «detener», «ayuda». Cualquier otra frase se envía como mensaje.
   Solo escucha mientras se pulsa Mic. En Chrome, el reconocimiento de voz puede procesar el audio en
   servidores de Google: dejarlo documentado en la política de privacidad antes de uso real.
+- **Cambiar de modelo:** en el Laboratorio hay un selector de modelo y el botón "Reintentar con otro modelo"
+  (también aparece junto a un mensaje de error). Recorre solo la lista permitida del servidor (`MODEL_ID` y
+  `FALLBACK_MODEL_IDS`); el navegador no puede pedir otros modelos. Al elegir uno se usa solo ese, sin respaldos,
+  hasta volver a "Automático". Todos comparten el mismo cupo diario.
 - **Medidor de tokens:** línea bajo el átomo con tokens del último mensaje y de la conversación
   (`~` = estimación cuando el modelo no informa el uso). No guarda nada.
 
