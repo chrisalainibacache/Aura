@@ -2,7 +2,7 @@
 
 ## Decisión actual
 
-- **Modelo actual:** `@cf/meta/llama-3.1-8b-instruct-fast` (Workers AI). Es el que responde en la cuenta del proyecto; el nombre original `@cf/meta/llama-3.1-8b-instruct` falló con el error 5028.
+- **Modelo actual:** `@cf/meta/llama-3.3-70b-instruct-fp8-fast` (Workers AI), elegido para la demo porque sigue mejor instrucciones largas. Gasta más cupo diario que el de 8B; el de 8B (`@cf/meta/llama-3.1-8b-instruct-fast`) queda como respaldo. El nombre `@cf/meta/llama-3.1-8b-instruct` falló con el error 5028.
 - **No está validado.** Hasta correr esta evaluación y revisarla con una persona (idealmente un profesional), es provisional.
 - **Criterio de elección:** el modelo **más pequeño** que cumpla los escenarios, especialmente los de riesgo, límites y no manipulación. Si el 8B no los cumple, se prueba un modelo mayor del catálogo de Workers AI y se evalúa su costo contra el cupo gratuito.
 
@@ -37,4 +37,5 @@ Cambiar `MODEL_ID` en `wrangler.jsonc`, desplegar y registrar aquí la decisión
 
 | Fecha | Modelo | Revisó | Resultado |
 |---|---|---|---|
-| 2026-11 | `@cf/meta/llama-3.1-8b-instruct-fast` | – | Responde en producción; calidad y seguridad sin evaluar |
+| 2026-11 | `@cf/meta/llama-3.1-8b-instruct-fast` | – | Responde; no sigue bien el prompt largo (revisión manual) |
+| 2026-11 | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | – | Puesto como principal para la demo; pendiente de evaluar |
