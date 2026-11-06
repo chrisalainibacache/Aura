@@ -122,3 +122,19 @@ test("usa los tokens que informa el modelo cuando existen", async () => {
   const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
   assert.deepEqual((await res.json()).usage, { input: 120, output: 30, total: 150, estimated: false });
 });
+
+test("cupo diario agotado: 429 con mensaje claro y sin probar respaldos", async () => {
+  const calls = [];
+  const orig = console.error; console.error = () => {};
+  const env = { ...mkEnv(async (model) => {
+    calls.push(model);
+    throw new Error("4006: you have used up your daily free allocation of 10,000 neurons, please upgrade");
+  }), FALLBACK_MODEL_IDS: "@cf/test/backup" };
+  const res = await worker.fetch(post({ messages: [{ role: "user", content: "hola" }] }), env);
+  console.error = orig;
+  assert.equal(res.status, 429);
+  const body = await res.json();
+  assert.equal(body.error.code, "quota_exhausted");
+  assert.match(body.error.message, /133/);
+  assert.equal(calls.length, 1);
+});

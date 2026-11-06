@@ -85,6 +85,12 @@ function tokenUsage(result, messages, reply) {
   return { input: i, output: o, total: i + o, estimated: true };
 }
 
+// ¿El error indica que se agotó el cupo diario de Workers AI? (código 4006 o texto de límite diario)
+function isQuotaError(err) {
+  const msg = String(err?.message ?? "");
+  return /\b4006\b|daily free allocation|used up your daily|neurons/i.test(msg);
+}
+
 async function handleChat(request, env) {
   if (request.method !== "POST") {
     return fail(405, "method_not_allowed", "Este servicio solo acepta mensajes enviados desde la aplicación.");
@@ -143,6 +149,11 @@ async function handleChat(request, env) {
         const reply = extractReply(result);
         if (reply) return json({ reply, model, usage: tokenUsage(result, messages, reply) });
       } catch (err) {
+        if (isQuotaError(err)) {
+          // Todos los modelos de Workers AI comparten el mismo cupo: no tiene sentido probar los de respaldo.
+          console.error("ai_quota_exhausted");
+          return fail(429, "quota_exhausted", "AURA llegó a su límite de uso por hoy y volverá a funcionar más tarde. Si necesitas ayuda ahora, llama al 133 (Carabineros) o al 131 (ambulancia), o habla con un adulto de confianza.");
+        }
         // Solo se registra el modelo, el tipo y el código de error, nunca el contenido de la conversación.
         const ref = aiErrorRef(err);
         if (ref && !refs.includes(ref)) refs.push(ref);
