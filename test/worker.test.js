@@ -183,3 +183,61 @@ test("modelo elegido que falla no prueba los demás", async () => {
   assert.equal(res.status, 502);
   assert.ok(calls.every((m) => m === "@cf/test/a"));
 });
+
+const b64 = (bytes) => Buffer.from(bytes).toString("base64");
+const fakeMp3 = new Uint8Array([0x49, 0x44, 0x33, ...Array(200).fill(7)]);
+const speak = (body) => new Request("https://x/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+test("/api/speak devuelve audio desde base64 y usa el modelo de voz configurado", async () => {
+  let call;
+  const env = { ...mkEnv(async (model, input) => { call = { model, input }; return { audio: b64(fakeMp3) }; }), TTS_MODEL_ID: "@cf/myshell-ai/melotts" };
+  const res = await worker.fetch(speak({ text: "Hola, soy AURA." }), env);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Content-Type"), "audio/mpeg");
+  assert.equal(res.headers.get("X-Aura-Tts-Model"), "@cf/myshell-ai/melotts");
+  assert.equal((await res.arrayBuffer()).byteLength, fakeMp3.length);
+  assert.deepEqual(call.input, { prompt: "Hola, soy AURA.", lang: "es" });
+});
+
+test("/api/speak acepta audio como flujo y detecta WAV", async () => {
+  const wav = new Uint8Array([0x52, 0x49, 0x46, 0x46, ...Array(200).fill(1)]);
+  const env = mkEnv(async () => new Response(wav).body);
+  const res = await worker.fetch(speak({ text: "Hola" }), env);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Content-Type"), "audio/wav");
+});
+
+test("/api/speak prueba el respaldo y luego devuelve 502 sin filtrar el texto", async () => {
+  const calls = [];
+  const logged = [];
+  const orig = console.error; console.error = (...a) => logged.push(a.join(" "));
+  const env = { ...mkEnv(async (model) => { calls.push(model); if (model.endsWith("backup")) return { audio: b64(fakeMp3) }; throw new Error("5007 secreto-privado"); }), TTS_MODEL_ID: "@cf/test/tts", TTS_FALLBACK_MODEL_IDS: "@cf/test/backup" };
+  const ok = await worker.fetch(speak({ text: "texto-privado" }), env);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get("X-Aura-Tts-Model"), "@cf/test/backup");
+  const bad = { ...mkEnv(async () => { throw new Error("5007 x"); }), TTS_MODEL_ID: "@cf/test/tts" };
+  const res = await worker.fetch(speak({ text: "texto-privado" }), bad);
+  console.error = orig;
+  assert.equal(res.status, 502);
+  assert.equal((await res.json()).error.ref, "5007");
+  assert.ok(!logged.join().includes("texto-privado"));
+});
+
+test("/api/speak valida la entrada y reconoce el cupo agotado", async () => {
+  const env = mkEnv(async () => ({ audio: b64(fakeMp3) }));
+  assert.equal((await worker.fetch(speak({}), env)).status, 400);
+  assert.equal((await worker.fetch(speak({ text: "   " }), env)).status, 400);
+  assert.equal((await worker.fetch(new Request("https://x/api/speak"), env)).status, 405);
+  const orig = console.error; console.error = () => {};
+  const quota = mkEnv(async () => { throw new Error("4006: you have used up your daily free allocation of 10,000 neurons"); });
+  const res = await worker.fetch(speak({ text: "hola" }), quota);
+  console.error = orig;
+  assert.equal(res.status, 429);
+});
+
+test("/api/speak recorta textos muy largos", async () => {
+  let sent;
+  const env = mkEnv(async (_m, input) => { sent = input.prompt; return { audio: b64(fakeMp3) }; });
+  await worker.fetch(speak({ text: "palabra ".repeat(1000) }), { ...env, TTS_MODEL_ID: "@cf/myshell-ai/melotts" });
+  assert.ok(sent.length <= 1500);
+});

@@ -11,10 +11,12 @@ const DEFAULTS = {
   MAX_TOKENS: 350,
 };
 const MAX_BODY_BYTES = 32 * 1024;
+const MAX_TTS_CHARS = 1500;
+const DEFAULT_TTS_MODEL = "@cf/myshell-ai/melotts";
 
 const SECURITY_HEADERS = {
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
   "Cache-Control": "no-store",
@@ -183,11 +185,90 @@ async function handleChat(request, env) {
   return fail(502, "ai_error", "Tuve un problema para responder. Puedes intentarlo de nuevo en un momento.", refs.join("/") || undefined);
 }
 
+// ---- Voz de AURA (texto a voz con Workers AI) ----
+function ttsInputs(model, text) {
+  if (/melotts/i.test(model)) return [{ prompt: text, lang: "es" }, { prompt: text }];
+  if (/deepgram/i.test(model)) return [{ text }];
+  return [{ text }, { prompt: text }];
+}
+
+function decodeBase64(b64) {
+  const bin = atob(String(b64).replace(/^data:[^,]*,/, ""));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+
+// Los modelos devuelven el audio como base64 en un objeto, como flujo o como bytes.
+async function audioBytes(result) {
+  if (!result) return null;
+  if (typeof result === "string") return decodeBase64(result);
+  if (typeof ReadableStream !== "undefined" && result instanceof ReadableStream) return new Uint8Array(await new Response(result).arrayBuffer());
+  if (result instanceof ArrayBuffer) return new Uint8Array(result);
+  if (ArrayBuffer.isView(result)) return new Uint8Array(result.buffer, result.byteOffset, result.byteLength);
+  if (typeof result.audio === "string") return decodeBase64(result.audio);
+  return null;
+}
+
+function audioType(bytes) {
+  const head = String.fromCharCode(...bytes.slice(0, 4));
+  if (head === "RIFF") return "audio/wav";
+  if (head === "OggS") return "audio/ogg";
+  return "audio/mpeg";
+}
+
+async function handleSpeak(request, env) {
+  if (request.method !== "POST") return fail(405, "method_not_allowed", "Este servicio solo acepta texto enviado desde la aplicación.");
+  if (!(request.headers.get("Content-Type") || "").includes("application/json")) {
+    return fail(415, "unsupported_media_type", "El formato de la solicitud no es válido.");
+  }
+  let payload;
+  try {
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) return fail(413, "too_large", "El texto es demasiado grande.");
+    payload = JSON.parse(raw);
+  } catch {
+    return fail(400, "bad_json", "No pude leer el texto.");
+  }
+  let text = typeof payload?.text === "string" ? payload.text.trim() : "";
+  if (!text) return fail(400, "invalid_text", "No recibí texto para leer.");
+  if (text.length > MAX_TTS_CHARS) text = text.slice(0, text.lastIndexOf(" ", MAX_TTS_CHARS) > 0 ? text.lastIndexOf(" ", MAX_TTS_CHARS) : MAX_TTS_CHARS);
+  if (!env.AI) return fail(503, "ai_unavailable", "La voz de AURA no está disponible en este momento.");
+
+  const models = [...new Set([
+    env.TTS_MODEL_ID || DEFAULT_TTS_MODEL,
+    ...String(env.TTS_FALLBACK_MODEL_IDS || "").split(",").map((m) => m.trim()).filter(Boolean),
+  ])];
+  const refs = [];
+  for (const model of models) {
+    for (const input of ttsInputs(model, text)) {
+      try {
+        const bytes = await audioBytes(await env.AI.run(model, input));
+        if (bytes && bytes.length > 100) {
+          return new Response(bytes, {
+            status: 200,
+            headers: { "Content-Type": audioType(bytes), "X-Aura-Tts-Model": model, ...SECURITY_HEADERS },
+          });
+        }
+      } catch (err) {
+        if (isQuotaError(err)) {
+          console.error("tts_quota_exhausted");
+          return fail(429, "quota_exhausted", "AURA llegó a su límite de uso por hoy.");
+        }
+        // Solo modelo, tipo y código de error; nunca el texto.
+        const ref = aiErrorRef(err);
+        if (ref && !refs.includes(ref)) refs.push(ref);
+        console.error("tts_error", model, err?.name || "Error", ref || "");
+      }
+    }
+  }
+  return fail(502, "tts_error", "No pude generar la voz en este momento.", refs.join("/") || undefined);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") return handleChat(request, env);
     if (url.pathname === "/api/models") return handleModels(request, env);
+    if (url.pathname === "/api/speak") return handleSpeak(request, env);
     if (url.pathname.startsWith("/api/")) return fail(404, "not_found", "No encontré lo que buscas.");
     // Resto de rutas: archivos estáticos (cabeceras definidas en public/_headers).
     return env.ASSETS.fetch(request);

@@ -46,6 +46,14 @@
       <details class="more lab">
         <summary>Laboratorio: voz y comandos</summary>
         <div class="lab-body">
+          <div class="row">
+            <label for="voiceSource">Fuente de voz</label>
+            <select id="voiceSource">
+              <option value="server">AURA (Cloudflare)</option>
+              <option value="device">Teléfono</option>
+            </select>
+          </div>
+          <p id="voiceInfo" class="hint" hidden></p>
           <div id="voiceControls" class="row">
             <label for="voiceSelect">Voz</label>
             <select id="voiceSelect"></select>
