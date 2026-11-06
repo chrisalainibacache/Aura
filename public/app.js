@@ -55,12 +55,15 @@
   }
   function resetTokens() { tok.input = 0; tok.output = 0; tok.last = null; tok.estimated = false; renderTokens(); }
 
-  // --- Voz de salida (opcional, apagada por defecto; usa las voces del propio dispositivo)
+  // --- Voz de salida (opcional, apagada por defecto). Fuente: voz de AURA (servidor) o voz del dispositivo.
   const synth = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined" ? window.speechSynthesis : null;
+  const voiceSourceSel = $("voiceSource"), voiceInfo = $("voiceInfo");
   let voiceOn = false;
+  let voiceSource = store.get("aura-voice-source") === "device" ? "device" : "server";
+  let audio = null, audioAbort = null, speakToken = 0;
 
   function setVoice(on) {
-    voiceOn = on && Boolean(synth);
+    voiceOn = on;
     voice.setAttribute("aria-pressed", String(voiceOn));
     voice.textContent = voiceOn ? "Voz: sí" : "Voz: no";
     store.set("aura-voice", voiceOn ? "1" : "0");
@@ -88,21 +91,29 @@
       || list.find((v) => /^es[-_]CL/i.test(v.lang)) || list[0] || null;
   }
 
+  voice.hidden = false;
+  rateSel.value = ["0.8", "0.95", "1.1"].includes(store.get("aura-rate")) ? store.get("aura-rate") : "0.95";
+  setVoice(store.get("aura-voice") === "1");
+  voice.addEventListener("click", () => setVoice(!voiceOn));
+  rateSel.addEventListener("change", () => store.set("aura-rate", rateSel.value));
+  voiceSourceSel.value = voiceSource;
+  voiceSourceSel.addEventListener("change", () => {
+    voiceSource = voiceSourceSel.value === "device" ? "device" : "server";
+    store.set("aura-voice-source", voiceSource);
+    stopSpeaking();
+  });
+  voiceTest.addEventListener("click", () => speak("Hola, soy AURA. Podemos ir a tu ritmo.", () => {}));
   if (synth) {
-    voice.hidden = false;
     populateVoices();
     if (typeof synth.addEventListener === "function") synth.addEventListener("voiceschanged", populateVoices);
-    rateSel.value = ["0.8", "0.95", "1.1"].includes(store.get("aura-rate")) ? store.get("aura-rate") : "0.95";
-    setVoice(store.get("aura-voice") === "1");
-    voice.addEventListener("click", () => setVoice(!voiceOn));
     voiceSel.addEventListener("change", () => store.set("aura-voice-uri", voiceSel.value));
-    rateSel.addEventListener("change", () => store.set("aura-rate", rateSel.value));
-    voiceTest.addEventListener("click", () => speak("Hola, soy AURA. Podemos ir a tu ritmo.", () => {}));
   } else {
     $("voiceControls").hidden = true;
   }
 
-  function speak(text, onEnd) {
+  function showVoiceInfo(text) { voiceInfo.textContent = text; voiceInfo.hidden = false; }
+
+  function speakDevice(text, onEnd) {
     if (!synth) { onEnd(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "es-CL";
@@ -113,7 +124,59 @@
     synth.cancel();
     synth.speak(u);
   }
+
+  function cancelAudio() {
+    if (audioAbort) { audioAbort.abort(); audioAbort = null; }
+    if (audio) {
+      audio.onended = null; audio.onerror = null;
+      audio.pause();
+      try { URL.revokeObjectURL(audio.src); } catch { /* ya liberada */ }
+      audio = null;
+    }
+  }
+
+  // Voz de AURA generada por el servidor (Workers AI). Si falla, se usa la voz del dispositivo.
+  async function speakServer(text, onEnd, token) {
+    const ctrl = new AbortController();
+    audioAbort = ctrl;
+    const res = await fetch("/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error("tts");
+    const blob = await res.blob();
+    if (token !== speakToken) return; // se canceló mientras se generaba
+    const url = URL.createObjectURL(blob);
+    const a = new Audio(url);
+    a.playbackRate = (Number(rateSel.value) || 0.95) / 0.95;
+    audio = a;
+    await a.play(); // si el navegador lo bloquea, lanza y se usa la voz del dispositivo
+    showVoiceInfo(`Voz en uso: AURA (${shortName(res.headers.get("X-Aura-Tts-Model") || "servidor")})`);
+    const end = () => { if (audio === a) cancelAudio(); onEnd(); };
+    a.onended = end;
+    a.onerror = end;
+  }
+
+  function speak(text, onEnd) {
+    const token = ++speakToken;
+    cancelAudio();
+    if (voiceSource === "server") {
+      speakServer(text, onEnd, token).catch((err) => {
+        if (token !== speakToken || (err && err.name === "AbortError")) return;
+        cancelAudio();
+        showVoiceInfo("Voz en uso: teléfono (la voz de AURA no respondió)");
+        speakDevice(text, onEnd);
+      });
+    } else {
+      showVoiceInfo("Voz en uso: teléfono");
+      speakDevice(text, onEnd);
+    }
+  }
   function stopSpeaking() {
+    speakToken += 1;
+    cancelAudio();
     if (synth) synth.cancel();
     clearTimeout(stateTimer);
     if (orb.dataset.state === "speaking") setState("idle");
@@ -128,7 +191,7 @@
   function startSpeaking(text, force) {
     setState("speaking");
     const back = () => { if (orb.dataset.state === "speaking") setState("idle"); if (convo) listenSoon(); };
-    if (synth && (voiceOn || force || convo || presentation)) {
+    if ((synth || voiceSource === "server") && (voiceOn || force || convo || presentation)) {
       speak(text, back);
     } else {
       // Sin voz: la luz acompaña mientras se lee (entre 1,5 y 7 segundos).

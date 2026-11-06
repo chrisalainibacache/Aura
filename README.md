@@ -36,6 +36,12 @@ npm run dev       # http://localhost:8787
 - **Voz:** botón "Voz" (apagado por defecto). Usa las voces del dispositivo; en "Laboratorio: voz y comandos"
   se elige la voz en español y la velocidad. En Android, más voces se instalan en
   *Ajustes → Salida de texto a voz*.
+- **Voz de AURA (servidor):** por defecto la voz sale de Workers AI (`TTS_MODEL_ID`, por defecto
+  `@cf/myshell-ai/melotts`, con `TTS_FALLBACK_MODEL_IDS` como respaldo) mediante `POST /api/speak`, y suena igual en
+  cualquier dispositivo. Si el servidor no responde (modelo no disponible en la cuenta, cupo agotado o
+  bloqueo del navegador), la app usa sola la voz del teléfono. En el Laboratorio, "Fuente de voz" permite elegir
+  entre AURA y el teléfono, y "Voz en uso" muestra cuál sonó. Los modelos de voz no se pudieron verificar contra la
+  cuenta: si ninguno funciona, ajustar los identificadores según el catálogo de Workers AI. Gasta cupo diario.
 - **Mic y comandos de voz:** «nueva conversación», «menos estímulos», «más estímulos», «activar voz»,
   «desactivar voz», «repetir», «detener», «ayuda». Cualquier otra frase se envía como mensaje.
   Solo escucha mientras se pulsa Mic. En Chrome, el reconocimiento de voz puede procesar el audio en

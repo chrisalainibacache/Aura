@@ -14,6 +14,9 @@
     "MODEL_ID": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     // Modelos de respaldo (separados por coma), se prueban en orden si el principal falla.
     "FALLBACK_MODEL_IDS": "@cf/meta/llama-3.1-8b-instruct-fast,@cf/meta/llama-3.1-8b-instruct-fp8",
+    // Voz de AURA (texto a voz). Si ninguno responde, la app usa la voz del teléfono.
+    "TTS_MODEL_ID": "@cf/myshell-ai/melotts",
+    "TTS_FALLBACK_MODEL_IDS": "@cf/deepgram/aura-2-es",
     "HISTORY_LIMIT": "10",
     "MAX_MESSAGE_CHARS": "1500",
     "MAX_TOKENS": "350"
