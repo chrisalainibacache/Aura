@@ -107,6 +107,28 @@ function handleModels(request, env) {
   return json({ models, default: models[0] });
 }
 
+// ---- Red de seguridad: refuerzo específico para el turno cuando hay señales de riesgo ----
+// Un prompt largo se olvida a medias; esta instrucción corta va al final del prompt de sistema.
+// Prefiere preguntar de más que de menos: una palabra ambigua solo provoca una pregunta amable.
+const fold = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const STRONG = /\b(desaparec\w*|morir\w*|matarme|quitarme la vida|quitar la vida|suicid\w*|no quiero (seguir|vivir)|hacerme dano|cortarme|acabar con todo|terminar con todo|ya no quiero estar)\b/;
+const WORTH = /\b(no sirvo|no servia para nada|no sirves para nada|no valgo|soy un fracaso|soy una carga|molesto a todos|nadie me quiere|nadie me va a extranar)\b/;
+const RISK_HINTS = {
+  strong: "ATENCIÓN EN ESTE TURNO: la persona habla de desaparecer, morir o hacerse daño. Antes de cualquier otra cosa: (1) en una frase, reconoce su dolor con sus palabras; (2) pregunta directo y con calma si piensa en quitarse la vida (por ejemplo: «cuando dices que quieres desaparecer, ¿estás pensando en quitarte la vida?»), salvo que ya lo haya aclarado en esta conversación; (3) esa es tu única pregunta. Si pregunta algo general sobre por qué la gente quiere morir, contesta en dos frases, sin listas ni métodos, y pregúntale por ella o él. No cambies de tema, no ofrezcas actividades, no copies frases de ejemplo ni uses frases de cartel como «no estás solo». Si ya dijo que sí piensa en quitarse la vida, sigue la sección CRISIS.",
+  worth: "ATENCIÓN EN ESTE TURNO: la persona se desvaloriza. En una frase, separa lo que le dijeron de lo que ella o él vale, sin discutir ni exagerar; después haz UNA pregunta sobre qué ha estado pasando. Si en algún momento habla de desaparecer o morir, pregúntalo directo.",
+  pending: "ATENCIÓN EN ESTE TURNO: hace poco en esta conversación la persona habló de desaparecer o morir. No cambies de tema ni cierres con una pregunta general: responde a lo que dice ahora y vuelve con suavidad a eso, con una sola pregunta (por ejemplo, cómo está con eso ahora).",
+};
+
+export function riskContext(messages) {
+  const users = messages.filter((m) => m.role === "user").map((m) => fold(m.content));
+  if (!users.length) return "";
+  const last = users[users.length - 1];
+  if (STRONG.test(last)) return RISK_HINTS.strong;
+  if (WORTH.test(last)) return RISK_HINTS.worth;
+  if (users.slice(-5, -1).some((t) => STRONG.test(t))) return RISK_HINTS.pending;
+  return "";
+}
+
 async function handleChat(request, env) {
   if (request.method !== "POST") {
     return fail(405, "method_not_allowed", "Este servicio solo acepta mensajes enviados desde la aplicación.");
@@ -157,7 +179,8 @@ async function handleChat(request, env) {
     }
   }
   const models = requested ? [requested] : allowed;
-  const messages = [{ role: "system", content: SYSTEM_PROMPT }, ...parsed.messages];
+  const hint = riskContext(parsed.messages);
+  const messages = [{ role: "system", content: hint ? `${SYSTEM_PROMPT}\n\n${hint}` : SYSTEM_PROMPT }, ...parsed.messages];
   const inputs = [
     { messages, max_tokens: num(env.MAX_TOKENS, DEFAULTS.MAX_TOKENS), temperature: 0.5 },
     { messages },
