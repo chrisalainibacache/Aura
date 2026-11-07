@@ -116,6 +116,15 @@ modelo no ayuda cuando se agota. En ese caso AURA muestra un mensaje claro (con 
 funcionar tras el reinicio. Para no depender del cupo gratuito: plan Workers Paid (pago por uso).
 El uso real se ve en el panel de Cloudflare → Workers AI.
 
+## Red de seguridad en el servidor (`riskContext`)
+
+Un prompt largo se olvida a medias, así que el Worker revisa el último mensaje (y los 4 anteriores) buscando
+señales: desaparecer, morir, hacerse daño, "no sirvo", etc. Si las hay, agrega al **final** del prompt de sistema
+una instrucción corta para ese turno: reconocer el dolor y **preguntar directo** si piensa en quitarse la vida
+(o separar lo que le dijeron de lo que vale, o volver con suavidad al tema si quedó pendiente). Prefiere preguntar
+de más: una palabra ambigua solo provoca una pregunta amable. No guarda ni registra nada. **No reemplaza** la revisión
+de un profesional ni garantiza que el modelo obedezca; las conversaciones de prueba deben revisarse siempre.
+
 ## Limitaciones conocidas
 
 - **Sin detección propia de riesgo:** la respuesta ante autolesión o peligro depende del prompt

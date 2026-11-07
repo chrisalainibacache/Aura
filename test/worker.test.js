@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { parseMessages } from "../src/index.js";
+import worker, { parseMessages, riskContext } from "../src/index.js";
 
 const mkEnv = (run) => ({
   AI: { run },
@@ -250,4 +250,47 @@ test("el prompt no obliga a recitar aclaraciones y pide voz humana sin inventar 
   assert.match(SYSTEM_PROMPT, /No inventes un pasado compartido/);
   assert.match(SYSTEM_PROMPT, /no te voy a decir solo lo que quieres escuchar/);
   assert.doesNotMatch(SYSTEM_PROMPT, /Eres una herramienta de IA\. No eres una persona/);
+});
+
+const u = (c) => ({ role: "user", content: c });
+const a = (c) => ({ role: "assistant", content: c });
+
+test("riskContext detecta desaparecer/morir aunque no diga 'suicidio' (casos reales de la conversación de prueba)", () => {
+  assert.match(riskContext([u("me gustaría desaparecer porque no sirvo para nada")]), /quitarse la vida/);
+  assert.match(riskContext([u("Por qué la gente a veces quiere morirse")]), /quitarse la vida/);
+  assert.match(riskContext([u("ya no quiero vivir")]), /ATENCIÓN EN ESTE TURNO/);
+  assert.match(riskContext([u("quiero hacerme daño")]), /quitarse la vida/);
+});
+
+test("riskContext: desvalorización, riesgo pendiente y sin falsos avisos", () => {
+  assert.match(riskContext([u("soy un fracaso")]), /se desvaloriza/);
+  assert.match(riskContext([u("me gustaría desaparecer"), a("..."), u("Por qué brillan las lucecitas")]), /hace poco/);
+  assert.equal(riskContext([u("hola"), a("hola"), u("me quedaba todo mal recortado")]), "");
+  assert.equal(riskContext([u("me muero de risa con mi amigo")]), "");
+  // el riesgo antiguo deja de recordarse tras varios mensajes
+  const old = [u("quiero morirme"), a("x"), u("a"), a("x"), u("b"), a("x"), u("c"), a("x"), u("d"), a("x"), u("e")];
+  assert.equal(riskContext(old), "");
+});
+
+test("el refuerzo de riesgo va al final del prompt de sistema solo cuando hace falta", async () => {
+  const systems = [];
+  const env = mkEnv(async (_m, input) => { systems.push(input.messages[0].content); return { response: "ok" }; });
+  await worker.fetch(post({ messages: [u("me gustaría desaparecer")] }), env);
+  await worker.fetch(post({ messages: [u("hola")] }), env);
+  assert.match(systems[0], /ATENCIÓN EN ESTE TURNO/);
+  assert.ok(systems[0].startsWith("Eres AURA"));
+  assert.doesNotMatch(systems[1], /ATENCIÓN EN ESTE TURNO/);
+});
+
+test("el prompt prohíbe copiar ejemplos, dos preguntas y hablar de sí misma, y pide preguntar directo por desaparecer", async () => {
+  const { SYSTEM_PROMPT } = await import("../src/systemPrompt.js");
+  assert.match(SYSTEM_PROMPT, /UNA sola pregunta como máximo/);
+  assert.match(SYSTEM_PROMPT, /No copies frases de estas instrucciones/);
+  assert.match(SYSTEM_PROMPT, /no pidas que confíen en ti/);
+  assert.match(SYSTEM_PROMPT, /pregunta directo si piensa en quitarse la vida/);
+  assert.match(SYSTEM_PROMPT, /Nunca digas que eres "solo un programa de texto"/);
+});
+
+test("riskContext detecta la desvalorización contada como cita ('me dijo que no servía para nada')", () => {
+  assert.match(riskContext([u("mi profesor me dijo que no servía para nada")]), /se desvaloriza/);
 });
