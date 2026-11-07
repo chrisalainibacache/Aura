@@ -76,6 +76,14 @@ npm run dev       # http://localhost:8787
 - **Medidor de tokens:** línea bajo el átomo con tokens del último mensaje y de la conversación
   (`~` = estimación cuando el modelo no informa el uso). No guarda nada.
 
+## Íconos
+
+El ícono (átomo con halo, órbitas y electrones) se genera con `node scripts/make-icons.mjs` (necesita Playwright; solo
+para regenerarlos). Produce el ícono normal (`icon-192/512.png`), el adaptable de Android con margen de seguridad
+(`icon-maskable-*.png`), el de iOS (`apple-touch-icon.png`) y el favicon (`aura.svg`). Los bordes del ícono se funden con
+el color de fondo (`#0b1620`), así que la pantalla de carga al abrir la app se ve limpia. Para ver un ícono nuevo hay
+que borrar el acceso directo y volver a instalarlo.
+
 ## Despliegue
 
 **Opción A: desde la terminal**
