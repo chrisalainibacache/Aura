@@ -86,7 +86,7 @@ main { flex: 1; display: flex; flex-direction: column; align-items: center; padd
 
 .composer {
   position: sticky; bottom: 0; display: flex; gap: 8px; align-items: flex-end;
-  padding: 10px 0 calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, rgba(11, 22, 32, 0));
+  padding: 10px 0 calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, transparent);
 }
 textarea {
   flex: 1; font: inherit; resize: none; min-height: 56px; max-height: 40vh; padding: 12px 14px;
@@ -143,3 +143,9 @@ html[data-presentation="true"] .exit:hover, html[data-presentation="true"] .exit
 .orb.canvas-on .halo, .orb.canvas-on .orbit, .orb.canvas-on .nucleus { display: none; }
 html[data-presentation="true"] .app { max-width: none; }
 html[data-presentation="true"] .orb { width: min(86vw, 78vh, 1500px); }
+
+/* Colores de la luz (lista cerrada): cambian el fondo y los acentos junto con el átomo. */
+html[data-color="azul"] { --bg: #0b1226; --surface: #121c36; --border: #2a3a66; --accent: #8fb0ff; --accent-text: #0a1330; }
+html[data-color="verde"] { --bg: #0a1a14; --surface: #10261d; --border: #27493a; --accent: #86e3b0; --accent-text: #052015; }
+html[data-color="ambar"] { --bg: #1a1209; --surface: #241a0f; --border: #4a3820; --accent: #ffc46e; --accent-text: #2a1a05; }
+html[data-color="violeta"] { --bg: #150f24; --surface: #1e1633; --border: #3d2f66; --accent: #c3a2ff; --accent-text: #1a0d33; }

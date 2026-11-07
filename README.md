@@ -42,6 +42,12 @@ npm run dev       # http://localhost:8787
   voz de AURA** (Web Audio; con la voz del teléfono usa un latido simulado), con ondas de luz y electrones que se
   aceleran. Los cambios son suaves (sin parpadeos). "Menos estímulos" y el ajuste de movimiento reducido del
   sistema lo dejan quieto. Si el canvas no está disponible, vuelve el átomo CSS.
+- **Ajustes de luz:** 5 colores (cian, azul, verde, ámbar, violeta; cambian también el fondo), 3 intensidades y 3
+  velocidades de giro, siempre de listas cerradas y guardados solo en el dispositivo. Se cambian desde el Laboratorio,
+  escribiendo o hablando («cambia a azul», «más luz», «menos luz», «gira más lento», «luz normal»; se aplican al
+  instante, sin pasar por el modelo) o pidiéndoselo a AURA. AURA nunca cambia la luz por su cuenta: la ofrece y espera
+  un «sí». Para aplicarla agrega al final de su mensaje una etiqueta como `[[luz: color=azul]]`, que la app quita
+  del texto y de la voz; los valores fuera de las listas se ignoran. "Menos estímulos" sigue mandando sobre todo.
 - **Voz de AURA (servidor):** por defecto la voz sale de Workers AI (`TTS_MODEL_ID`, por defecto
   `@cf/myshell-ai/melotts`, con `TTS_FALLBACK_MODEL_IDS` como respaldo) mediante `POST /api/speak`, y suena igual en
   cualquier dispositivo. Si el servidor no responde (modelo no disponible en la cuenta, cupo agotado o
