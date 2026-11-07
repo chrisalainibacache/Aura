@@ -5,10 +5,19 @@
   "use strict";
 
   const TAU = Math.PI * 2;
-  const GLOW = [127, 214, 230];
-  const CORE = [232, 251, 255];
-  const RING = [112, 200, 232];
+  // Paletas permitidas (lista cerrada): luz, núcleo y anillos.
+  const PALETTES = {
+    cian:    { glow: [127, 214, 230], core: [232, 251, 255], ring: [112, 200, 232] },
+    azul:    { glow: [120, 160, 255], core: [230, 238, 255], ring: [105, 145, 245] },
+    verde:   { glow: [120, 226, 170], core: [230, 255, 240], ring: [100, 210, 150] },
+    ambar:   { glow: [255, 196, 110], core: [255, 244, 225], ring: [245, 180, 90] },
+    violeta: { glow: [190, 150, 255], core: [244, 236, 255], ring: [170, 130, 245] },
+  };
+  const INTENSITY = { baja: 0.55, media: 1, alta: 1.3 };
+  const SPEED = { lenta: 0.5, normal: 1, rapida: 1.7 };
+  let GLOW = PALETTES.cian.glow, CORE = PALETTES.cian.core, RING = PALETTES.cian.ring;
   const MAX_SIDE = 2304; // límite de píxeles del lienzo (≈ altura de 4K)
+  const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * t));
   const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
 
   // Parámetros objetivo por estado; se acercan suavemente a ellos.
@@ -27,6 +36,7 @@
     let state = "idle", still = false, levelFn = null, quality = 1;
     let w = 0, raf = 0, last = 0, t = 0, level = 0;
     let slow = 0, frames = 0;
+    const look = { intensity: 1, speed: 1 };
     const cur = { ...STATES.idle };
     const seed = Math.random() * 100;
     const orbits = [
@@ -96,7 +106,7 @@
       const unit = w / 1000;
       const cx = w / 2, cy = w / 2;
       const R = (w / 1.36) * 0.5 * 0.98; // el lienzo es 1,36 veces el átomo para dejar espacio al brillo
-      const g = cur.glow * (animating() ? 1 : 0.7);
+      const g = cur.glow * look.intensity * (animating() ? 1 : 0.7);
 
       ctx.clearRect(0, 0, w, w);
       ctx.globalCompositeOperation = "lighter";
@@ -108,7 +118,7 @@
 
       // Polvo de luz
       for (const p of dust) {
-        p.a += p.s * dt * (0.08 + cur.swirl * 0.35);
+        p.a += p.s * dt * (0.08 + cur.swirl * 0.35) * look.speed;
         const rr = R * p.r * (1 + 0.06 * level * Math.sin(t * 2 + p.p));
         const x = cx + Math.cos(p.a) * rr, y = cy + Math.sin(p.a) * rr * 0.9;
         const a = (0.1 + 0.3 * p.z) * (0.6 + 0.4 * Math.sin(t * 1.3 + p.p)) * g;
@@ -151,7 +161,7 @@
         ctx.strokeStyle = rgba(RING, (0.28 + 0.25 * level) * g);
         ctx.stroke();
 
-        o.pos += dt * o.dir * 0.8 * cur.speed * (1 + 1.6 * level);
+        o.pos += dt * o.dir * 0.8 * cur.speed * look.speed * (1 + 1.6 * level);
         const TRAIL = 22;
         for (let k = TRAIL; k >= 0; k--) {
           const tt = o.pos - o.dir * k * 0.045;
@@ -175,7 +185,7 @@
       const r0 = R * 0.15 * pulse;
       circle(cx, cy, r0 * 5.5, radial(cx, cy, r0 * 5.5, [[0, rgba(GLOW, 0.5 * g)], [0.4, rgba(GLOW, 0.16 * g)], [1, rgba(GLOW, 0)]]));
       ctx.globalCompositeOperation = "source-over";
-      circle(cx, cy, r0, radial(cx - r0 * 0.2, cy - r0 * 0.25, r0 * 1.15, [[0, rgba(CORE, 1)], [0.35, "rgba(189,239,247,1)"], [1, "rgba(79,182,201,1)"]]));
+      circle(cx, cy, r0, radial(cx - r0 * 0.2, cy - r0 * 0.25, r0 * 1.15, [[0, rgba(CORE, 1)], [0.35, rgba(mix(CORE, GLOW, 0.45), 1)], [1, rgba(mix(GLOW, [0, 0, 0], 0.38), 1)]]));
       ctx.globalCompositeOperation = "lighter";
       ctx.beginPath();
       ctx.arc(cx, cy, r0 * 1.35, 0, TAU);
@@ -226,6 +236,13 @@
       setState(s) { state = STATES[s] ? s : "idle"; if (!animating()) { snap(); draw(0); } },
       setLevelSource(fn) { levelFn = typeof fn === "function" ? fn : null; },
       setStill(on) { still = Boolean(on); sync(); },
+      // Solo valores de listas cerradas; cualquier otro se ignora.
+      setLook(v) {
+        if (v && PALETTES[v.color]) { GLOW = PALETTES[v.color].glow; CORE = PALETTES[v.color].core; RING = PALETTES[v.color].ring; }
+        if (v && INTENSITY[v.intensity] != null) look.intensity = INTENSITY[v.intensity];
+        if (v && SPEED[v.speed] != null) look.speed = SPEED[v.speed];
+        if (!animating()) draw(0);
+      },
     };
   }
 

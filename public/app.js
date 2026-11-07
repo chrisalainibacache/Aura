@@ -45,6 +45,30 @@
   setCalm(store.get("aura-calm") === "1");
   calm.addEventListener("click", () => setCalm(calm.getAttribute("aria-pressed") !== "true"));
 
+  // --- Luz: color, intensidad y giro (listas cerradas). Se guardan solo en este dispositivo.
+  const LOOK_COLORS = ["cian", "azul", "verde", "ambar", "violeta"];
+  const LOOK_INTENSITY = ["baja", "media", "alta"];
+  const LOOK_SPEED = ["lenta", "normal", "rapida"];
+  const LOOK_BG = { cian: "#0b1620", azul: "#0b1226", verde: "#0a1a14", ambar: "#1a1209", violeta: "#150f24" };
+  const LOOK_DEFAULT = { color: "cian", intensity: "media", speed: "normal" };
+  const look = { ...LOOK_DEFAULT };
+  const lookSel = { color: $("lookColor"), intensity: $("lookIntensity"), speed: $("lookSpeed") };
+
+  function applyLook(change, save = true) {
+    if (change.color && LOOK_COLORS.includes(change.color)) look.color = change.color;
+    if (change.intensity && LOOK_INTENSITY.includes(change.intensity)) look.intensity = change.intensity;
+    if (change.speed && LOOK_SPEED.includes(change.speed)) look.speed = change.speed;
+    document.documentElement.dataset.color = look.color;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", LOOK_BG[look.color]);
+    for (const k of Object.keys(lookSel)) lookSel[k].value = look[k];
+    if (atom) atom.setLook(look);
+    if (save) store.set("aura-look", JSON.stringify(look));
+  }
+  try { applyLook(JSON.parse(store.get("aura-look") || "{}"), false); } catch { applyLook({}, false); }
+  for (const k of Object.keys(lookSel)) lookSel[k].addEventListener("change", () => applyLook({ [k]: lookSel[k].value }));
+  $("lookReset").addEventListener("click", () => { applyLook(LOOK_DEFAULT); status.textContent = "Luz normal."; });
+
   // --- Medidor de tokens (laboratorio)
   const fmt = (n) => (n >= 1000 ? (n / 1000).toFixed(1).replace(".0", "") + "k" : String(n));
   function renderTokens() {
@@ -355,11 +379,14 @@
         lastUsedModel = typeof data.model === "string" ? data.model : lastUsedModel;
         if (typeof data.model === "string") { const mi = $("modelInfo"); mi.textContent = `Modelo en uso: ${data.model}`; mi.hidden = false; }
         addUsage(data.usage);
-        history.push({ role: "assistant", content: data.reply });
-        addToLog("aura", data.reply);
-        lastReply = data.reply;
-        showReply(data.reply);
-        startSpeaking(data.reply, false);
+        const parsedReply = extractLook(data.reply);
+        const replyText = parsedReply.text || "Listo.";
+        if (Object.keys(parsedReply.change).length) applyLook(parsedReply.change);
+        history.push({ role: "assistant", content: replyText });
+        addToLog("aura", replyText);
+        lastReply = replyText;
+        showReply(replyText);
+        startSpeaking(replyText, false);
       }
     } catch {
       history.pop();
@@ -380,6 +407,7 @@
     const text = input.value.trim();
     if (!text || busy) return;
     input.value = "";
+    if (tryLookCommand(text)) return;
     stopSpeaking();
     submit(text);
   });
@@ -411,6 +439,57 @@
 
   // --- Comandos de voz y dictado (opcional; solo escucha mientras se pulsa Mic)
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  // --- Cambios de luz pedidos por la persona (escritos o por voz): se aplican al instante, sin pasar por el modelo.
+  const COLOR_WORDS = { cian: "cian", celeste: "cian", turquesa: "cian", azul: "azul", verde: "verde", ambar: "ambar", naranja: "ambar", amarillo: "ambar", dorado: "ambar", violeta: "violeta", morado: "violeta", lila: "violeta" };
+  const step = (list, value, delta) => list[Math.max(0, Math.min(list.length - 1, list.indexOf(value) + delta))];
+
+  function parseLookCommand(text) {
+    const n = norm(text);
+    if (!n || n.split(" ").length > 7) return null; // frases largas son conversación, no órdenes
+    if (/\b(luz normal|restablecer luz|luz original|colores normales)\b/.test(n)) return { reset: true };
+    const change = {};
+    const cm = n.match(/\b(cian|celeste|turquesa|azul|verde|ambar|naranja|amarillo|dorado|violeta|morado|lila)\b/);
+    if (cm && /\b(color|luz|luces|cambia|cambiar|pon|poner|ponla|ponlo|quiero|atomo)\b/.test(n)) change.color = COLOR_WORDS[cm[1]];
+    if (/\b(mas (luz|luces|brillo)|(sube|subir|aumenta|aumentar) (la |el )?(luz|brillo)|(agrega|agregar) mas luces)\b/.test(n)) change.intensity = step(LOOK_INTENSITY, look.intensity, 1);
+    if (/\b(menos (luz|luces|brillo)|(baja|bajar) (la |el )?(luz|brillo)|mas (tenue|suave)|menos brillante)\b/.test(n)) change.intensity = step(LOOK_INTENSITY, look.intensity, -1);
+    if (/\b(giro|gira|girar|luces|atomo|orbitas|electrones)\b/.test(n)) {
+      if (/\b(mas (rapido|veloz)|acelera|acelerar)\b/.test(n)) change.speed = step(LOOK_SPEED, look.speed, 1);
+      if (/\b(mas (lento|despacio)|desacelera|frena)\b/.test(n)) change.speed = step(LOOK_SPEED, look.speed, -1);
+    }
+    return Object.keys(change).length ? change : null;
+  }
+
+  // Devuelve true si el texto era una orden de luz (y ya se aplicó).
+  function tryLookCommand(text) {
+    const cmd = parseLookCommand(text);
+    if (!cmd) return false;
+    if (cmd.reset) { applyLook(LOOK_DEFAULT); status.textContent = "Luz normal."; return true; }
+    const before = JSON.stringify(look);
+    applyLook(cmd);
+    status.textContent = before === JSON.stringify(look) ? "La luz ya está en ese límite." : "Listo, cambié la luz.";
+    return true;
+  }
+
+  // AURA puede pedir un cambio de luz con una etiqueta al final del mensaje, p. ej. [[luz: color=azul]].
+  // Solo valen valores de las listas cerradas; la etiqueta nunca se muestra ni se lee en voz alta.
+  function extractLook(reply) {
+    const change = {};
+    const text = reply
+      .replace(/\[\[\s*luz\s*:([^\]]*)\]\]/gi, (_, body) => {
+        String(body).split(/[,;]/).forEach((pair) => {
+          const [k, v] = pair.split("=").map((x) => norm(x || ""));
+          if (k === "color" && LOOK_COLORS.includes(v)) change.color = v;
+          else if (k === "intensidad" && LOOK_INTENSITY.includes(v)) change.intensity = v;
+          else if (k === "giro" && LOOK_SPEED.includes(v)) change.speed = v;
+        });
+        return "";
+      })
+      .replace(/\[\[[^\]]*\]\]/g, "")
+      .replace(/[ \t]+\n/g, "\n")
+      .trim();
+    return { text, change };
+  }
+
   const COMMANDS = [
     { label: "modo presentación", re: /\b(modo presentacion|pantalla limpia)\b/, run: () => setPresentation(true) },
     { label: "salir de la presentación", re: /\b(salir|terminar) (de )?(la )?presentacion\b/, run: () => setPresentation(false) },
@@ -434,6 +513,7 @@
   let rec = null, listening = false;
 
   function handleSpoken(text) {
+    if (tryLookCommand(text)) { if (convo) listenSoon(); return; }
     const cmd = matchCommand(text);
     if (cmd) {
       status.textContent = `Comando: ${cmd.label}`;

@@ -294,3 +294,11 @@ test("el prompt prohíbe copiar ejemplos, dos preguntas y hablar de sí misma, y
 test("riskContext detecta la desvalorización contada como cita ('me dijo que no servía para nada')", () => {
   assert.match(riskContext([u("mi profesor me dijo que no servía para nada")]), /se desvaloriza/);
 });
+
+test("el prompt enseña las etiquetas de luz y prohíbe cambiarla sin permiso", async () => {
+  const { SYSTEM_PROMPT } = await import("../src/systemPrompt.js");
+  assert.match(SYSTEM_PROMPT, /\[\[luz: color=azul\]\]/);
+  assert.match(SYSTEM_PROMPT, /Nunca cambies la luz por tu cuenta/);
+  assert.match(SYSTEM_PROMPT, /ambar, violeta/);
+  assert.match(SYSTEM_PROMPT, /Nunca digas que eres "solo un programa de texto"/);
+});
