@@ -19,7 +19,7 @@
 | Evidencias cronológicas | [`EVIDENCIA_CRONOLOGICA.md`](EVIDENCIA_CRONOLOGICA.md) | Listo |
 | Huella de integridad | [`MANIFIESTO_INTEGRIDAD.md`](MANIFIESTO_INTEGRIDAD.md) y [`INTEGRITY_MANIFEST.sha256`](INTEGRITY_MANIFEST.sha256) | Listo para el snapshot `b1de123`; regenerar para la versión final |
 | Copia del código fuente de la versión | Se genera con `git archive` (ver `VERSION_A_REGISTRAR.md`) | Pendiente (requiere autorización y etiqueta) |
-| Licencia del proyecto | [`docs/LICENSE_ANALYSIS.md`](../LICENSE_ANALYSIS.md) | Pendiente de decisión del creador |
+| Licencia del proyecto | [`LICENSE`](../../LICENSE) (PolyForm Noncommercial 1.0.0), [`NOTICE`](../../NOTICE) y [`docs/LICENSE_ANALYSIS.md`](../LICENSE_ANALYSIS.md) | Elegida por el creador el 2026-11-08; pendiente de aprobar y fusionar el PR |
 
 ## Qué NO debe subirse a este repositorio público
 
@@ -29,7 +29,7 @@ Guardarlos aparte y presentarlos directamente ante el organismo.
 ## Pendiente de decisión o acción del creador
 
 1. Aprobar o ajustar estos documentos y fusionar la propuesta de cambios.
-2. Decidir la licencia y, si corresponde, los términos adicionales de atribución.
+2. Revisar con un abogado la licencia elegida (PolyForm Noncommercial 1.0.0) y el acuerdo de contribución para licencias comerciales.
 3. Consultar a un abogado cómo declarar la asistencia de IA y qué se inscribe.
 4. Crear la etiqueta de versión y regenerar la huella de integridad.
 5. Exportar y guardar, fuera del repositorio, la conversación de desarrollo (referencia `Claude-Session` en los commits).

@@ -7,6 +7,12 @@ propia licencia o condiciones de uso. Este documento no otorga ni modifica ning�
 registro oficial de paquetes (npm) el 2026-11-08. Lo demás figura como "Por verificar" y debe confirmarse en la fuente
 oficial indicada antes de cualquier distribución o inscripción. **No se inventaron licencias ni versiones.**
 
+## 0. Licencia de AURA
+
+El código y la documentación propios de AURA se publican bajo **PolyForm Noncommercial 1.0.0** (ver `LICENSE`). Esa licencia
+**no cambia ni reemplaza** las condiciones de ninguno de los componentes de terceros listados abajo. El texto de la licencia
+de AURA se tomó de los datos oficiales de la lista SPDX (paquete npm `spdx-license-list` 6.12.0, verificado).
+
 ## 1. Modelos de inteligencia artificial
 
 AURA usa estos modelos **como servicio** a través de Cloudflare Workers AI. AURA no incluye ni redistribuye los pesos.

@@ -12,6 +12,7 @@ authors:
 version: "0.1.0"
 repository-code: "https://github.com/chrisalainibacache/Aura"
 url: "https://github.com/chrisalainibacache/Aura"
+license: PolyForm-Noncommercial-1.0.0
 keywords:
   - autismo
   - neurodivergencia
@@ -20,4 +21,3 @@ keywords:
   - accesibilidad
 # date-released: se completará con la fecha real de la primera versión publicada (release) del repositorio.
 #   Hoy no hay etiquetas ni releases; 2026 es el año de creación según el historial de Git.
-# license: se completará cuando el creador apruebe la licencia (ver docs/LICENSE_ANALYSIS.md).

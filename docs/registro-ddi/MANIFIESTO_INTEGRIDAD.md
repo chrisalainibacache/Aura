@@ -18,8 +18,10 @@ git show b1de123ba858fde1c6f4cc96a275bb332e3315fc:src/index.js | sha256sum
 
 ## Límites
 
-- Este manifiesto **no incluye** los documentos agregados después del snapshot (autoría, avisos de terceros, análisis de
-  licencia y esta carpeta) ni se incluye a sí mismo.
+- Este manifiesto **no incluye** los documentos agregados después del snapshot (autoría, licencia, avisos de terceros,
+  análisis de licencia y esta carpeta) ni se incluye a sí mismo. Además, `package.json` y `README.md` cambiaron después
+  del snapshot (se agregaron los campos `author` y `license` y la sección de autoría); sus huellas actuales difieren de las
+  del manifiesto, que corresponden al commit `b1de123`.
 - Antes de una inscripción hay que **regenerarlo sobre el commit definitivo** de la versión a registrar (ver
   `VERSION_A_REGISTRAR.md`) y guardar una copia fuera del repositorio.
 - Una huella demuestra que el contenido no cambió; no demuestra por sí sola quién lo creó ni cuándo.

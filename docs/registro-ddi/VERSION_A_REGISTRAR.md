@@ -9,7 +9,7 @@
 ## Antes de registrar, decidir
 
 1. Qué versión exacta se registra y si incluye la documentación de autoría posterior al snapshot.
-2. La licencia (ver `docs/LICENSE_ANALYSIS.md`) y cómo declarar la asistencia de IA en el desarrollo.
+2. Confirmar la licencia (elegida: PolyForm Noncommercial 1.0.0; ver `docs/LICENSE_ANALYSIS.md`) y cómo declarar la asistencia de IA en el desarrollo.
 3. Si se espera a una revisión profesional del prompt de seguridad antes de fijar la versión.
 
 ## Cómo fijar y copiar la versión (cuando el creador lo autorice)

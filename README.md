@@ -18,14 +18,20 @@ Su acceso es gratuito. El proyecto busca facilitar herramientas de apoyo a famil
 
 La disponibilidad pública del software no elimina el reconocimiento de su creador original ni los derechos correspondientes sobre sus contribuciones originales.
 
+- [`LICENSE`](LICENSE) y [`NOTICE`](NOTICE)
 - [`COPYRIGHT`](COPYRIGHT)
 - [`AUTHORS`](AUTHORS)
 - [`AUTHORSHIP.md`](AUTHORSHIP.md)
 - [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
 - [`CITATION.cff`](CITATION.cff) (para citar AURA) y [`CONTRIBUTING.md`](CONTRIBUTING.md) (cómo se reconoce cada aporte)
 
-**Licencia:** en proceso de definición; ver el análisis en [`docs/LICENSE_ANALYSIS.md`](docs/LICENSE_ANALYSIS.md). **AURA no está
-inscrita** como programa computacional; los antecedentes preparados para una futura inscripción están en
+**Licencia: [PolyForm Noncommercial 1.0.0](LICENSE)** (uso **no comercial**). AURA es de acceso gratuito para familias,
+cuidadores, escuelas, organizaciones sin fines de lucro, instituciones públicas y uso personal; **el uso comercial
+requiere un acuerdo con el creador**. Es una licencia de *código disponible*: **no es una licencia de código abierto**
+(OSI). Debe conservarse el aviso de [`NOTICE`](NOTICE). Resumen no oficial en español:
+[`docs/LICENCIA_RESUMEN_ES.md`](docs/LICENCIA_RESUMEN_ES.md); el texto que vale es el de [`LICENSE`](LICENSE).
+
+**AURA no está inscrita** como programa computacional; los antecedentes preparados para una futura inscripción están en
 [`docs/registro-ddi/`](docs/registro-ddi/).
 
 **Built with Llama.** AURA usa modelos Llama de Meta (mediante Cloudflare Workers AI). Los modelos, los servicios y las

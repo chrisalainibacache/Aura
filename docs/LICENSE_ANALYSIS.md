@@ -1,7 +1,43 @@
 # Análisis de licencia de AURA (para decisión del creador)
 
-> **No se cambió ni se agregó ninguna licencia.** Este documento compara opciones y presenta una recomendación para que
-> el creador decida. No es asesoría legal: antes de publicar una licencia conviene que la revise un abogado.
+> **Decisión del creador (2026-11-08): licencia no comercial.** Se aplicó **PolyForm Noncommercial 1.0.0** en este mismo
+> PR (`LICENSE`, `NOTICE`, metadatos de `package.json` y `CITATION.cff`), **pendiente de su aprobación y fusión**.
+> El análisis que sigue es el que se presentó para decidir; **no es asesoría legal** y conviene que un abogado revise la licencia.
+> La recomendación original (AGPL con atribución) se conserva abajo como referencia.
+
+## 0. Decisión aplicada: PolyForm Noncommercial 1.0.0
+
+- **Texto:** copia exacta del texto de la licencia tomado de los datos oficiales de la lista SPDX (paquete npm
+  `spdx-license-list` 6.12.0, identificador `PolyForm-Noncommercial-1.0.0`): 700 palabras y las 15 secciones. Conviene
+  cotejarlo con https://polyformproject.org/licenses/noncommercial/1.0.0. **No se modificó ninguna palabra.**
+- **Qué permite** (según el texto): cualquier propósito no comercial; uso personal (investigación, pruebas, estudio, hobby,
+  sin aplicación comercial prevista); y el uso de organizaciones benéficas, instituciones educativas, organizaciones
+  públicas de investigación, de seguridad o salud pública, de protección ambiental e instituciones de gobierno,
+  **sin importar cómo se financien**. Permite copiar, distribuir y hacer cambios u obras derivadas para esos fines.
+- **Qué exige:** a quien reciba una copia de parte de AURA hay que entregarle el texto de la licencia (o su URL) **y las
+  líneas `Required Notice:`** que haya entregado el creador. Por eso existe el archivo `NOTICE`: así el reconocimiento
+  del creador viaja con cada copia.
+- **Qué no permite sin un acuerdo con el creador:** el uso comercial. Por ejemplo, ofrecer AURA como producto o servicio de
+  pago, usarla dentro de un negocio con fines de lucro, o integrarla en un servicio que se cobra. Una consulta privada de
+  pago o una empresa que la use con ánimo de lucro necesitarían una licencia comercial aparte, que solo puede otorgar el creador.
+- **No se pueden transferir ni sublicenciar** los permisos, y el creador puede dar licencias a otras personas (incluida
+  una comercial). Quien **reclame por escrito que el software infringe una patente pierde su licencia de patente**.
+- **Incumplimiento:** si se avisa por escrito de una infracción, la licencia puede continuar si se corrige **dentro de 32 días**;
+  si no, termina de inmediato.
+- **Sin garantía:** el software se entrega "tal cual" y el creador no responde por daños, en la medida en que la ley lo permita.
+  Esto es especialmente relevante dado que AURA es una prueba técnica que no debe usarse con menores reales sin revisión profesional.
+- **Antes no había licencia**, de modo que no se concedió ningún permiso anterior: la licencia rige desde que se fusione.
+
+### Advertencias de esta elección
+1. **No es código abierto** (OSI) y no debe presentarse como tal. Es "código disponible".
+2. **No impide por sí sola que alguien copie y use AURA sin permiso**: hay que hacerla valer, y la ley aplicable (incluida la chilena)
+   debe revisarla un abogado.
+3. **Puede reducir las contribuciones y la adopción** de quienes buscan licencias abiertas convencionales.
+4. **Contribuciones de terceros:** para que el creador pueda otorgar licencias comerciales sobre el código aportado por otras
+   personas, hace falta su consentimiento por escrito (acuerdo de contribución o cesión). Ver `CONTRIBUTING.md`.
+5. **Terceros:** la licencia solo cubre lo que es de AURA. Llama, Cloudflare, las voces y las herramientas siguen con sus
+   propias condiciones (`THIRD_PARTY_NOTICES.md`); la licencia no cambia ninguna de ellas.
+6. **La traducción al español es informativa.** Solo vale el texto en inglés de `LICENSE`.
 
 ## 1. Estado actual
 
@@ -106,7 +142,9 @@ comercial (sección 6), asumiendo sus costos en adopción y en el uso de la pala
 sobre AGPL en un software que se usa como servicio en red. Licencia no comercial, si impedir el lucro pesa más que la
 apertura.
 
-## 9. Pasos para aplicar la decisión (no ejecutados; requieren tu autorización)
+## 9. Pasos para aplicar la decisión
+
+Ya aplicados en este PR (pendientes de aprobación): 2 (`LICENSE` y `NOTICE`) y 3 (`license` y `author` en `package.json` y `CITATION.cff`). Siguen pendientes, y requieren tu autorización, 1 (revisión legal), 4, 5 y 6.
 
 1. Elegir la licencia y revisarla con un abogado (incluida la redacción de los términos adicionales y cómo declarar la
    asistencia de IA).

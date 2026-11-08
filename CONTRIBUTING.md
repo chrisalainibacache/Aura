@@ -18,9 +18,14 @@ condiciones de licencia y el reconocimiento de las contribuciones originales.
 
 ## Licencia de las contribuciones
 
-La licencia del proyecto está **pendiente de decisión** (ver [`docs/LICENSE_ANALYSIS.md`](docs/LICENSE_ANALYSIS.md)).
-Mientras no se defina, antes de aceptar una contribución se acordará por escrito, en la misma propuesta de cambios, bajo
-qué licencia se aporta. Quien contribuya declara que es autor de lo que aporta o tiene derecho a aportarlo.
+AURA se publica bajo la licencia **PolyForm Noncommercial 1.0.0** (ver [`LICENSE`](LICENSE) y
+[`docs/LICENSE_ANALYSIS.md`](docs/LICENSE_ANALYSIS.md)). Al contribuir, quien aporta:
+
+1. Declara que es autor de lo que aporta o tiene derecho a aportarlo.
+2. Acepta que su aporte se distribuya bajo esa misma licencia.
+3. **Para que el creador pueda otorgar licencias comerciales que incluyan tu aporte**, debe darse un consentimiento
+   específico y por escrito (por ejemplo, en la propuesta de cambios). Sin él, el aporte queda solo bajo la licencia no
+   comercial. El texto exacto de este acuerdo debe revisarlo un abogado antes de aceptar contribuciones externas.
 
 ## Si se usa asistencia de IA
 
