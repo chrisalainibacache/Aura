@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "description": "AURA - MVP conversacional (Fase 1). Solo datos ficticios.",
+  "author": "Christopher Alain Ibacache Crisosto",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
