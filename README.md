@@ -8,6 +8,29 @@ Documento rector: [`AURA_MASTER_SPEC.md`](AURA_MASTER_SPEC.md). Prompt de implem
 > revisión profesional del protocolo de seguridad, supervisión adulta y revisión legal
 > (ver secciones 9 y 13 de la especificación).
 
+## Autoría y reconocimiento
+
+AURA fue creada y desarrollada originalmente por **Christopher Alain Ibacache Crisosto**, en Chile.
+
+Es un proyecto de inteligencia artificial de finalidad social, orientado al acompañamiento y contención inicial de niños, niñas y adolescentes autistas y neurodivergentes.
+
+Su acceso es gratuito. El proyecto busca facilitar herramientas de apoyo a familias, cuidadores y comunidades.
+
+La disponibilidad pública del software no elimina el reconocimiento de su creador original ni los derechos correspondientes sobre sus contribuciones originales.
+
+- [`COPYRIGHT`](COPYRIGHT)
+- [`AUTHORS`](AUTHORS)
+- [`AUTHORSHIP.md`](AUTHORSHIP.md)
+- [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
+- [`CITATION.cff`](CITATION.cff) (para citar AURA) y [`CONTRIBUTING.md`](CONTRIBUTING.md) (cómo se reconoce cada aporte)
+
+**Licencia:** en proceso de definición; ver el análisis en [`docs/LICENSE_ANALYSIS.md`](docs/LICENSE_ANALYSIS.md). **AURA no está
+inscrita** como programa computacional; los antecedentes preparados para una futura inscripción están en
+[`docs/registro-ddi/`](docs/registro-ddi/).
+
+**Built with Llama.** AURA usa modelos Llama de Meta (mediante Cloudflare Workers AI). Los modelos, los servicios y las
+herramientas de terceros mantienen sus propias licencias: ver [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ## Qué incluye
 
 - Interfaz de conversación responsive y accesible (`public/`), con modo "menos estímulos".

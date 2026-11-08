@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "Si usas AURA en una publicación, investigación, documentación o proyecto, cítala con estos datos."
+title: "AURA"
+type: software
+abstract: >-
+  AURA es un software con inteligencia artificial, de acceso gratuito y finalidad social, orientado a la
+  contención inicial y el acompañamiento de niños, niñas y adolescentes autistas y neurodivergentes.
+authors:
+  - family-names: "Ibacache Crisosto"
+    given-names: "Christopher Alain"
+    country: CL
+version: "0.1.0"
+repository-code: "https://github.com/chrisalainibacache/Aura"
+url: "https://github.com/chrisalainibacache/Aura"
+keywords:
+  - autismo
+  - neurodivergencia
+  - inteligencia artificial
+  - acompañamiento
+  - accesibilidad
+# date-released: se completará con la fecha real de la primera versión publicada (release) del repositorio.
+#   Hoy no hay etiquetas ni releases; 2026 es el año de creación según el historial de Git.
+# license: se completará cuando el creador apruebe la licencia (ver docs/LICENSE_ANALYSIS.md).
